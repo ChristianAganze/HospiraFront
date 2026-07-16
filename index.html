@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospira - L'excellence médicale au service de votre santé</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/landing.css">
+</head>
+<body>
+    <div class="landing-container">
+        <!-- Navigation -->
+        <nav class="landing-nav">
+            <div class="logo-container">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary-color); margin-right: 8px;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                <span class="logo-text">Hospira</span>
+            </div>
+            <div class="nav-links">
+                <a href="#services" class="nav-link">Services</a>
+                <a href="#about" class="nav-link">À propos</a>
+                <a href="#contact" class="nav-link">Contact</a>
+                <a href="login.html" class="btn btn-primary btn-login">Connexion</a>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <main class="hero-section">
+            <div class="hero-content">
+                <div class="hero-label">
+                    <span class="line"></span> INTELLIGENCE CLINIQUE
+                </div>
+                <h1 class="hero-title">L'excellence médicale <em>au service de votre santé</em></h1>
+                <p class="hero-description">
+                    Hospira redéfinit le parcours de soin avec une plateforme intégrée
+                    alliant précision diagnostique, gestion simplifiée et intelligence
+                    clinique en temps réel.
+                </p>
+                <div class="hero-actions">
+                    <a href="login.html" class="btn btn-primary btn-lg">Commencer maintenant →</a>
+                    <a href="#services" class="btn btn-secondary btn-lg">Découvrir la solution</a>
+                </div>
+            </div>
+
+            <div class="hero-image-container">
+                <img src="assets/hero_doctor.png" alt="Médecin professionnel" class="hero-img">
+                <!-- Overlay Card -->
+                <div class="hero-stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">FLUX PATIENTS EN DIRECT</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary-color);"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    </div>
+                    <div class="stat-chart">
+                        <div class="bar" style="height: 40%;"></div>
+                        <div class="bar" style="height: 60%;"></div>
+                        <div class="bar" style="height: 30%;"></div>
+                        <div class="bar" style="height: 80%; background-color: var(--primary-dark);"></div>
+                        <div class="bar" style="height: 50%;"></div>
+                    </div>
+                    <div class="stat-value">98.4%</div>
+                    <div class="stat-subtitle">Précision opérationnelle</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Partners Section -->
+        <section class="partners-section">
+            <h5 class="partners-title">PARTENAIRE DE CONFIANCE DES INSTITUTIONS LEADERS</h5>
+            <div class="partners-logos">
+                <div class="partner-logo"></div>
+                <div class="partner-logo"></div>
+                <div class="partner-logo"></div>
+                <div class="partner-logo"></div>
+            </div>
+        </section>
+
+        <!-- Services Section -->
+        <section id="services" class="landing-section bg-light">
+            <div class="section-header">
+                <h2>Nos Services Médicaux</h2>
+                <p>Une offre complète de soins pour répondre à tous vos besoins de santé avec précision et rapidité.</p>
+            </div>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                    </div>
+                    <h3>Consultations Générales</h3>
+                    <p>Des médecins expérimentés à votre écoute pour un suivi régulier et personnalisé.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                    <h3>Protection & Assurance</h3>
+                    <p>Prise en charge simplifiée et sécurisée de vos dossiers avec les principales assurances.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </div>
+                    <h3>Urgences 24/7</h3>
+                    <p>Une équipe médicale réactive disponible à tout moment pour gérer les cas critiques.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="landing-section">
+            <div class="about-container">
+                <div class="about-image">
+                    <img src="assets/hero_doctor.png" alt="À propos de Hospira">
+                </div>
+                <div class="about-content">
+                    <h2>À propos de Hospira</h2>
+                    <p>Hospira est plus qu'un simple établissement médical. C'est une vision de la médecine moderne, où l'humain et la technologie se rencontrent pour offrir les meilleurs soins.</p>
+                    <p>Notre mission est de digitaliser et de simplifier le parcours du patient tout en maintenant une qualité de soin exceptionnelle et une relation de confiance.</p>
+                    <ul class="about-list">
+                        <li>✓ Plus de 50 spécialistes reconnus</li>
+                        <li>✓ Équipements de dernière génération</li>
+                        <li>✓ Prise en charge rapide et personnalisée</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="landing-section bg-light">
+            <div class="section-header">
+                <h2>Nous Contacter</h2>
+                <p>Notre équipe est à votre entière disposition pour répondre à toutes vos questions.</p>
+            </div>
+            <div class="contact-container">
+                <div class="contact-info">
+                    <div class="info-item">
+                        <strong>📍 Adresse</strong>
+                        <p>123 Avenue de la Santé, Kinshasa</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>📞 Téléphone</strong>
+                        <p>+243 81 000 0000</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>✉️ Email</strong>
+                        <p>contact@hospira.com</p>
+                    </div>
+                </div>
+                <form class="contact-form">
+                    <div style="display:flex; gap: 1rem; margin-bottom: 1rem;">
+                        <input type="text" placeholder="Votre nom" class="form-control" required style="flex:1;">
+                        <input type="email" placeholder="Votre email" class="form-control" required style="flex:1;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <textarea placeholder="Votre message" class="form-control" rows="4" required style="width:100%;"></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="alert('Message envoyé avec succès !')">Envoyer le message</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="landing-footer">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="logo-container" style="color: white; margin-bottom: 1rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                        <span>Hospira</span>
+                    </div>
+                    <p style="color: rgba(255,255,255,0.7); max-width: 300px;">L'excellence médicale au service de votre santé grâce à l'intelligence clinique.</p>
+                </div>
+                <div class="footer-links">
+                    <strong>Liens Rapides</strong>
+                    <a href="#services">Services</a>
+                    <a href="#about">À propos</a>
+                    <a href="#contact">Contact</a>
+                </div>
+                <div class="footer-links">
+                    <strong>Portails</strong>
+                    <a href="login.html">Connexion Employés</a>
+                    <a href="login.html">Espace Patient</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; 2026 Hospira. Tous droits réservés.
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospira - Portail Patient</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        .patient-portal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+        .appointment-card {
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.2s ease;
+        }
+        .appointment-card:hover {
+            transform: translateY(-2px);
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .status-planifie { background-color: rgba(9, 132, 227, 0.1); color: var(--primary-color); }
+        .status-termine { background-color: rgba(0, 184, 148, 0.1); color: #00b894; }
+        .status-annule { background-color: rgba(214, 48, 49, 0.1); color: var(--danger-color); }
+    </style>
+</head>
+<body style="background-color: var(--bg-main);">
+
+    <nav style="background-color: var(--bg-card); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm);">
+        <h2 style="margin: 0;">Hospi<span style="color:var(--secondary-color)">ra</span> <span style="font-size: 1rem; color: var(--text-muted); font-weight: normal;">Portail Patient</span></h2>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span id="patient-name-top" style="font-weight: 500;">Chargement...</span>
+            <button id="btn-logout" class="btn btn-secondary" style="padding: 0.5rem 1rem;">Déconnexion</button>
+        </div>
+    </nav>
+
+    <main style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
+        
+        <div class="patient-portal-header">
+            <h1 style="margin-top: 0;">Bienvenue sur votre espace santé, <span id="patient-firstname"></span></h1>
+            <p style="opacity: 0.9; margin-bottom: 0;">Gérez vos rendez-vous, consultez votre historique et accédez à vos ordonnances.</p>
+        </div>
+
+        <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+            
+            <!-- Colonne Principale -->
+            <div style="flex: 2; min-width: 350px;">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>Mes prochains rendez-vous</h3>
+                    <button class="btn btn-primary" id="btn-new-rdv">+ Prendre un rendez-vous</button>
+                </div>
+
+                <div id="upcoming-rdv-list">
+                    <!-- Loaded via JS -->
+                    <div class="card appointment-card text-center" style="padding: 2rem;">
+                        <p style="color: var(--text-muted);">Chargement de vos rendez-vous...</p>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 3rem; margin-bottom: 1.5rem;">Historique de consultations</h3>
+                <div class="card">
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--bg-main);">
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Date</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Médecin</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Diagnostic</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Documents</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-list">
+                                <tr><td colspan="4" class="text-center" style="padding: 1rem;">Aucun historique récent.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Colonne Secondaire -->
+            <div style="flex: 1; min-width: 300px;">
+                <div class="card">
+                    <h3 style="margin-top: 0; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 1rem;">Mes Ordonnances</h3>
+                    <div id="ordonnances-list">
+                        <p class="text-center text-muted" style="margin-top: 1rem;">Aucune ordonnance en cours.</p>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 2rem;">
+                    <h3 style="margin-top: 0; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 1rem;">Factures à régler</h3>
+                    <div id="factures-list">
+                        <p class="text-center text-muted" style="margin-top: 1rem;">Vous êtes à jour dans vos paiements.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal Prendre RDV -->
+    <div id="modal-new-rdv" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Nouveau Rendez-vous</h2>
+                <button class="close-modal" id="close-modal-rdv">&times;</button>
+            </div>
+            <form id="form-new-rdv">
+                <div class="form-group">
+                    <label class="form-label">Médecin</label>
+                    <select id="rdv-medecin" class="form-control" required>
+                        <option value="">Sélectionnez un médecin</option>
+                        <!-- Loaded via JS -->
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Date souhaitée</label>
+                        <input type="date" id="rdv-date" class="form-control" required min="">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Heure souhaitée</label>
+                        <input type="time" id="rdv-time" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Motif de la consultation</label>
+                    <textarea id="rdv-motif" class="form-control" rows="3" required placeholder="Décrivez brièvement vos symptômes..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block mt-2">Confirmer la demande</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('hospira_token');
+            const userStr = localStorage.getItem('hospira_user');
+            const user = userStr ? JSON.parse(userStr) : null;
+
+            if (!token || !user || user.role !== 'Patient') {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            document.getElementById('patient-name-top').textContent = `${user.prenom} ${user.nom}`;
+            document.getElementById('patient-firstname').textContent = user.prenom;
+
+            document.getElementById('btn-logout').addEventListener('click', () => {
+                localStorage.removeItem('hospira_token');
+                localStorage.removeItem('hospira_user');
+                window.location.href = 'login.html';
+            });
+
+            // Modal Logic
+            const modal = document.getElementById('modal-new-rdv');
+            const btnNew = document.getElementById('btn-new-rdv');
+            const btnClose = document.getElementById('close-modal-rdv');
+
+            // Set min date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('rdv-date').setAttribute('min', today);
+
+            btnNew.addEventListener('click', () => modal.style.display = 'flex');
+            btnClose.addEventListener('click', () => modal.style.display = 'none');
+            window.addEventListener('click', (e) => {
+                if (e.target === modal) modal.style.display = 'none';
+            });
+
+            // Load logic will be implemented here (fetch doctors, fetch my appointments)
+            async function loadMedecins() {
+                try {
+                    const response = await ApiClient.request('/api/medecins', 'GET');
+                    const select = document.getElementById('rdv-medecin');
+                    if (response && response.records) {
+                        response.records.forEach(med => {
+                            const option = document.createElement('option');
+                            option.value = med.id;
+                            option.textContent = `Dr. ${med.prenom} ${med.nom}`;
+                            select.appendChild(option);
+                        });
+                    }
+                } catch(err) { console.error('Erreur médecins', err); }
+            }
+
+            async function loadMyRendezvous() {
+                try {
+                    const response = await ApiClient.request(`/api/rendezvous`, 'GET');
+                    const list = document.getElementById('upcoming-list');
+                    if (response && response.records) {
+                        // Filter for this patient
+                        const myRdv = response.records.filter(r => r.patient_nom.includes(user.nom));
+                        if(myRdv.length > 0) {
+                            list.innerHTML = myRdv.map(r => `
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
+                                    <div>
+                                        <strong>${new Date(r.date_rdv).toLocaleDateString('fr-FR')} à ${r.heure_rdv.substring(0,5)}</strong><br>
+                                        <small class="text-muted">Dr. ${r.medecin_prenom} ${r.medecin_nom} - ${r.motif}</small>
+                                    </div>
+                                    <span style="font-size: 0.8rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: ${r.statut === 'Confirmé' ? 'rgba(0,184,148,0.1)' : 'rgba(253,203,110,0.1)'}; color: ${r.statut === 'Confirmé' ? '#00b894' : '#e1b12c'};">${r.statut}</span>
+                                </div>
+                            `).join('');
+                        } else {
+                            list.innerHTML = '<p class="text-muted">Aucun rendez-vous à venir.</p>';
+                        }
+                    }
+                } catch(err) { console.error(err); }
+            }
+
+            async function loadMyConsultations() {
+                try {
+                    // Need patient_id. user.patient_id is returned by login.
+                    if(!user.patient_id) return;
+                    const response = await ApiClient.request(`/api/consultations?patient_id=${user.patient_id}`, 'GET');
+                    const list = document.getElementById('history-list');
+                    if (response && response.records && response.records.length > 0) {
+                        list.innerHTML = response.records.map(c => `
+                            <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                                <td style="padding: 1rem 0.5rem;">${new Date(c.date_consultation).toLocaleDateString('fr-FR')}</td>
+                                <td style="padding: 1rem 0.5rem;">Dr. ${c.medecin_prenom} ${c.medecin_nom}</td>
+                                <td style="padding: 1rem 0.5rem;">${c.diagnostic || 'En attente'}</td>
+                                <td style="padding: 1rem 0.5rem;">
+                                    ${c.prescriptions && c.prescriptions.length > 0 ? '<span style="color:var(--primary-color);">Ordonnance disponible</span>' : '-'}
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                } catch(err) { console.error(err); }
+            }
+
+            document.getElementById('form-new-rdv').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if(!user.patient_id) { alert("Patient non configuré"); return; }
+                const data = {
+                    patient_id: user.patient_id,
+                    medecin_id: document.getElementById('rdv-medecin').value,
+                    date_rdv: document.getElementById('rdv-date').value,
+                    heure_rdv: document.getElementById('rdv-time').value,
+                    motif: document.getElementById('rdv-motif').value
+                };
+
+                try {
+                    await ApiClient.request('/api/rendezvous', 'POST', data);
+                    alert("Demande de rendez-vous envoyée !");
+                    modal.style.display = 'none';
+                    loadMyRendezvous();
+                } catch(err) {
+                    alert("Erreur lors de la prise de rendez-vous");
+                }
+            });
+
+            loadMedecins();
+            loadMyRendezvous();
+            loadMyConsultations();
+        });
+    </script>
+</body>
+</html>

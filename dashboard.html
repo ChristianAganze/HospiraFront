@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Hospira</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Hospi<span style="color:var(--secondary-color)">ra</span></h2>
+            <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Menu" style="display: none; background: none; border: none; color: var(--primary-color); cursor: pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+        </div>
+        
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="nav-dashboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Tableau de bord
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link active" id="nav-patients">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Patients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="nav-rendezvous">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    Rendez-vous
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="nav-caisse">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    Caisse
+                </a>
+            </li>
+            <li class="nav-item" id="menu-staff" style="display: none;">
+                <a href="#" class="nav-link" id="nav-staff">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Personnel
+                </a>
+            </li>
+        </ul>
+
+        <div class="user-profile">
+            <img id="user-img" src="" alt="Profile" style="display: none; width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+            <div class="user-avatar" id="user-initials">A</div>
+            <div class="user-info">
+                <h4 id="user-name">Chargement...</h4>
+                <p id="user-role">Chargement...</p>
+            </div>
+            <button id="profile-btn" aria-label="Profil" style="background: none; border: none; color: var(--primary-color); cursor: pointer; margin-right: 5px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </button>
+            <button id="logout-btn" aria-label="Déconnexion" style="background: none; border: none; color: var(--danger-color); cursor: pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="topbar">
+            <h1 id="page-title">Gestion des Patients</h1>
+            <button class="btn btn-primary" id="btn-add-patient">+ Nouveau Patient</button>
+        </header>
+
+        <section class="content-area" id="main-view">
+            
+            <!-- Vue Dashboard (Admin) -->
+            <div id="view-dashboard-admin" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>Aperçu des Statistiques (Direction)</h3>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="card" style="text-align: center;">
+                        <h4 style="color: var(--text-muted); margin-bottom: 0.5rem;">Patients Inscrits</h4>
+                        <h2 style="font-size: 2.5rem; color: var(--primary-color); margin: 0;" id="stat-patients">...</h2>
+                    </div>
+                    <div class="card" style="text-align: center;">
+                        <h4 style="color: var(--text-muted); margin-bottom: 0.5rem;">Consultations</h4>
+                        <h2 style="font-size: 2.5rem; color: var(--success-color); margin: 0;" id="stat-consultations">...</h2>
+                    </div>
+                    <div class="card" style="text-align: center;">
+                        <h4 style="color: var(--text-muted); margin-bottom: 0.5rem;">Rendez-vous</h4>
+                        <h2 style="font-size: 2.5rem; color: var(--warning-color); margin: 0;" id="stat-rendezvous">...</h2>
+                    </div>
+                    <div class="card" style="text-align: center;">
+                        <h4 style="color: var(--text-muted); margin-bottom: 0.5rem;">Revenus du jour (FC)</h4>
+                        <h2 style="font-size: 2.5rem; color: var(--info-color); margin: 0;" id="stat-revenus">...</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vue Dashboard (Médecin) -->
+            <div id="view-dashboard-medecin" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>Mon Espace Clinique</h3>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="card">
+                        <h4 style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 1rem; margin-top: 0;">File d'attente (Patients arrivés)</h4>
+                        <div id="medecin-file-attente">
+                            <p class="text-muted text-center mt-2">Aucun patient en salle d'attente.</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h4 style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 1rem; margin-top: 0;">Mes Rendez-vous du jour</h4>
+                        <div id="medecin-rdv-jour">
+                            <p class="text-muted text-center mt-2">Aucun rendez-vous prévu aujourd'hui.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vue Dashboard (Accueil / Secrétaire) -->
+            <div id="view-dashboard-accueil" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>Flux en Temps Réel</h3>
+                    <div>
+                        <button class="btn btn-primary" onclick="document.getElementById('nav-patients').click()">+ Nouveau Dossier</button>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--bg-main);">
+                                <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Patient / IUP</th>
+                                <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Arrivée</th>
+                                <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Statut</th>
+                                <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Localisation</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accueil-flux-body">
+                            <tr><td colspan="4" class="text-center" style="padding: 2rem;">Chargement du flux...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Vue Dashboard (Caissier) -->
+            <div id="view-dashboard-caisse" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>Aperçu Caisse</h3>
+                </div>
+                
+                <div class="card" style="margin-bottom: 1.5rem; text-align: center; max-width: 300px;">
+                    <h4 style="color: var(--text-muted); margin-bottom: 0.5rem;">Caisse du Jour</h4>
+                    <h2 style="font-size: 2rem; color: var(--success-color); margin: 0;" id="caisse-total-jour">...</h2>
+                </div>
+
+                <div class="card">
+                    <h4 style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 1rem; margin-top: 0;">Factures en attente urgente</h4>
+                    <div id="caisse-factures-urgentes">
+                        <p class="text-muted text-center mt-2">Aucune facture en attente.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vue Patients -->
+            <div id="view-patients">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3>Liste des patients enregistrés</h3>
+                        <input type="text" id="search-patient" class="form-control" placeholder="Rechercher (Nom, IUP)..." style="width: 250px;">
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--bg-main);">
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">IUP</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Patient</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Date de Naissance</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Sexe</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Téléphone</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="patients-table-body">
+                                <tr><td colspan="6" class="text-center" style="padding: 2rem;">Chargement des patients...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vue Rendez-vous -->
+            <div id="view-rendezvous" style="display: none;">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3>Calendrier des rendez-vous</h3>
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--bg-main);">
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Date & Heure</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Patient</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Motif</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Statut</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rendezvous-table-body">
+                                <tr><td colspan="5" class="text-center" style="padding: 2rem;">Chargement des rendez-vous...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vue Consultation (Masquée par défaut) -->
+            <div id="view-consultation" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div>
+                        <h2 style="margin: 0; color: var(--text-main);" id="consultation-patient-name">Dossier Patient</h2>
+                        <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;" id="consultation-patient-info">Sélectionnez un patient pour commencer la consultation</p>
+                    </div>
+                    <button class="btn btn-secondary" id="btn-back-patients">Retour à la liste</button>
+                </div>
+
+                <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                    
+                    <!-- Historique (Colonne Gauche) -->
+                    <div style="flex: 1; min-width: 300px;">
+                        <div class="card" style="height: 100%;">
+                            <h3 style="margin-top: 0;">Historique Médical</h3>
+                            <div id="consultation-historique" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+                                <!-- Les anciennes consultations s'afficheront ici -->
+                                <p class="text-center text-muted">Aucun historique disponible.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nouvelle Consultation (Colonne Droite) -->
+                    <div style="flex: 2; min-width: 350px;">
+                        <div class="card">
+                            <h3 style="margin-top: 0; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 10px;">Nouvelle Consultation</h3>
+                            
+                            <form id="form-nouvelle-consultation">
+                                <!-- ID caché du patient -->
+                                <input type="hidden" id="cons-patient-id">
+                                <input type="hidden" id="cons-rendezvous-id">
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div class="form-group">
+                                        <label>Poids (kg)</label>
+                                        <input type="number" step="0.1" class="form-control" id="cons-poids">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Taille (cm)</label>
+                                        <input type="number" step="0.1" class="form-control" id="cons-taille">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Température (°C)</label>
+                                        <input type="number" step="0.1" class="form-control" id="cons-temp">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Tension (ex: 12/8)</label>
+                                        <input type="text" class="form-control" id="cons-tension">
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="margin-top: 1rem;">
+                                    <label>Symptômes <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="cons-symptomes" rows="3" required></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Diagnostic</label>
+                                    <textarea class="form-control" id="cons-diagnostic" rows="3"></textarea>
+                                </div>
+
+                                <!-- Section Ordonnance intégrée -->
+                                <div style="background: rgba(var(--primary-color-rgb), 0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(var(--primary-color-rgb), 0.1);">
+                                    <h4 style="margin-top: 0; color: var(--primary-color);">Prescription Médicale</h4>
+                                    
+                                    <div id="ordonnance-list" style="margin-bottom: 1rem;">
+                                        <!-- Liste des médicaments ajoutés -->
+                                    </div>
+
+                                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.5rem; align-items: end;">
+                                        <div class="form-group" style="margin: 0;">
+                                            <label style="font-size: 0.8rem;">Médicament</label>
+                                            <input type="text" class="form-control" id="presc-medicament" placeholder="Nom du médicament">
+                                        </div>
+                                        <div class="form-group" style="margin: 0;">
+                                            <label style="font-size: 0.8rem;">Posologie</label>
+                                            <input type="text" class="form-control" id="presc-posologie" placeholder="Ex: 1 matin, 1 soir">
+                                        </div>
+                                        <button type="button" class="btn btn-secondary" id="btn-add-medicament">Ajouter</button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Notes complémentaires</label>
+                                    <textarea class="form-control" id="cons-notes" rows="2"></textarea>
+                                </div>
+
+                                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('form-nouvelle-consultation').reset()">Effacer</button>
+                                    <button type="submit" class="btn btn-primary">Enregistrer la consultation</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vue Caisse -->
+            <div id="view-caisse" style="display: none;">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3>Factures en attente</h3>
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--bg-main);">
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Réf.</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Patient</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Montant</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Statut</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="caisse-table-body">
+                                <tr><td colspan="5" class="text-center" style="padding: 2rem;">Chargement des factures...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            <!-- Vue Staff -->
+            <div id="view-staff" style="display: none;">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3>Gestion du Personnel</h3>
+                        <button class="btn btn-primary" id="btn-add-staff">+ Nouveau Membre</button>
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--bg-main);">
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Nom complet</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Rôle</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Email</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Date d'ajout</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staff-table-body">
+                                <tr><td colspan="4" class="text-center" style="padding: 2rem;">Chargement...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Modals -->
+
+    <!-- Modal Nouveau Patient -->
+    <div id="modal-patient" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nouveau Patient</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="form-patient">
+                <div class="form-group">
+                    <label>Nom <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="patient-nom" required>
+                </div>
+                <div class="form-group">
+                    <label>Prénom <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="patient-prenom" required>
+                </div>
+                <div class="form-group">
+                    <label>Date de naissance <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="patient-date-naissance" required>
+                </div>
+                <div class="form-group">
+                    <label>Sexe</label>
+                    <select class="form-control" id="patient-sexe">
+                        <option value="M">Masculin</option>
+                        <option value="F">Féminin</option>
+                        <option value="Autre">Autre</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Téléphone</label>
+                    <input type="tel" class="form-control" id="patient-telephone">
+                </div>
+                <div class="form-group">
+                    <label>Adresse</label>
+                    <textarea class="form-control" id="patient-adresse" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Enregistrer le patient</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Prise de Rendez-vous -->
+    <div id="modal-rendezvous" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Programmer un Rendez-vous</h2>
+                <button class="close-btn" id="close-modal-rdv">&times;</button>
+            </div>
+            <form id="form-rendezvous">
+                <input type="hidden" id="rdv-patient-id">
+                <div class="form-group">
+                    <label>Patient</label>
+                    <input type="text" class="form-control" id="rdv-patient-nom" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="rdv-date" required>
+                </div>
+                <div class="form-group">
+                    <label>Heure <span class="text-danger">*</span></label>
+                    <input type="time" class="form-control" id="rdv-heure" required>
+                </div>
+                <div class="form-group">
+                    <label>Motif</label>
+                    <input type="text" class="form-control" id="rdv-motif" placeholder="Ex: Consultation générale">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Confirmer le rendez-vous</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Reçu de Paiement -->
+    <div id="modal-recu" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header" style="border: none;">
+                <button class="close-btn" id="close-modal-recu">&times;</button>
+            </div>
+            
+            <div id="ticket-caisse" style="padding: 20px; border: 1px dashed #ccc; margin-bottom: 20px;">
+                <h2 style="margin-bottom: 5px;">Hôpital Hospira</h2>
+                <p style="font-size: 12px; color: #666; margin-top: 0;">Reçu de paiement</p>
+                <hr style="border: 1px dashed #eee; margin: 15px 0;">
+                <div style="text-align: left; font-size: 14px;">
+                    <p><strong>Patient :</strong> <span id="recu-patient">...</span></p>
+                    <p><strong>Date :</strong> <span id="recu-date">...</span></p>
+                    <p><strong>Motif :</strong> Consultation Médicale</p>
+                </div>
+                <hr style="border: 1px dashed #eee; margin: 15px 0;">
+                <div style="text-align: right; font-size: 18px;">
+                    <strong>Total : <span id="recu-montant">...</span> FC</strong>
+                </div>
+            </div>
+            
+            <button id="btn-print-recu" class="btn btn-primary" style="width: 100%;">Imprimer le Reçu</button>
+        </div>
+    <!-- Modal Profil / Mot de passe -->
+    <div id="modal-profile" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Mon Profil</h2>
+                <button class="close-btn" id="close-modal-profile">&times;</button>
+            </div>
+            <div id="profile-message" class="error-message" style="display:none; margin-bottom:1rem;"></div>
+            <form id="form-profile">
+                <h4 style="margin-bottom: 1rem;">Changer de mot de passe</h4>
+                <div class="form-group">
+                    <label>Ancien mot de passe</label>
+                    <input type="password" id="profile-old-pwd" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Nouveau mot de passe</label>
+                    <input type="password" id="profile-new-pwd" class="form-control" required minlength="6">
+                </div>
+                <button type="submit" id="btn-change-pwd" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Mettre à jour</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Nouveau Staff -->
+    <div id="modal-staff" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Ajouter au Personnel</h2>
+                <button class="close-btn" id="close-modal-staff">&times;</button>
+            </div>
+            <div id="staff-message" class="error-message" style="display:none; margin-bottom:1rem;"></div>
+            <form id="form-staff">
+                <div class="form-group">
+                    <label>Nom</label>
+                    <input type="text" id="staff-nom" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Prénom</label>
+                    <input type="text" id="staff-prenom" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="staff-email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Rôle</label>
+                    <select id="staff-role" class="form-control" required>
+                        <option value="Medecin">Médecin</option>
+                        <option value="Secretaire">Secrétaire</option>
+                        <option value="Infirmier">Infirmier</option>
+                        <option value="Caissier">Caissier</option>
+                        <option value="Laborantin">Laborantin</option>
+                        <option value="Admin">Administrateur</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mot de passe par défaut</label>
+                    <input type="password" id="staff-password" class="form-control" required minlength="6">
+                </div>
+                <button type="submit" id="btn-save-staff" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Créer le compte</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/patientsVM.js"></script>
+    <script src="js/rendezvousVM.js"></script>
+    <script src="js/consultationVM.js"></script>
+    <script src="js/caisseVM.js"></script>
+    <script src="js/viewmodels/staffVM.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
