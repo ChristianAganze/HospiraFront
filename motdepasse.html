@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Changer le mot de passe - Hospira</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="glass-card">
+            <div class="logo-area">
+                <h1>Hospi<span>ra</span></h1>
+                <p>Changement de mot de passe obligatoire</p>
+            </div>
+
+            <div id="info-text" style="margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--text-muted); text-align: center;">
+                Pour des raisons de sécurité, vous devez définir un nouveau mot de passe avant de continuer.
+            </div>
+
+            <div id="error-alert" class="error-message">
+                Une erreur est survenue.
+            </div>
+
+            <div id="success-alert" class="error-message" style="background-color: rgba(0, 184, 148, 0.1); color: #00b894; border-color: #00b894;">
+                Mot de passe modifié avec succès.
+            </div>
+
+            <form id="change-password-form" autocomplete="off">
+                <div class="form-group">
+                    <label for="old-password" class="form-label">Ancien mot de passe</label>
+                    <input type="password" id="old-password" class="form-control" placeholder="••••••••" required autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="new-password" class="form-label">Nouveau mot de passe</label>
+                    <input type="password" id="new-password" class="form-control" placeholder="Au moins 6 caractères" required minlength="6" autocomplete="off">
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="new-password-confirm" class="form-label">Confirmer le nouveau mot de passe</label>
+                    <input type="password" id="new-password-confirm" class="form-control" placeholder="••••••••" required minlength="6" autocomplete="off">
+                </div>
+
+                <button type="submit" id="change-password-btn" class="btn btn-primary btn-block">
+                    Mettre à jour le mot de passe
+                    <span class="loading-spinner"></span>
+                </button>
+            </form>
+
+            <p class="text-center mt-3" style="font-size: 0.85rem; color: var(--text-muted);">
+                <a href="#" id="logout-link" style="color: var(--primary-color);">Se déconnecter</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('change-password-form');
+            const oldPwd = document.getElementById('old-password');
+            const newPwd = document.getElementById('new-password');
+            const newPwdConfirm = document.getElementById('new-password-confirm');
+            const btn = document.getElementById('change-password-btn');
+            const errorAlert = document.getElementById('error-alert');
+            const successAlert = document.getElementById('success-alert');
+            const logoutLink = document.getElementById('logout-link');
+
+            errorAlert.style.display = 'none';
+            successAlert.style.display = 'none';
+
+            logoutLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('hospira_token');
+                localStorage.removeItem('hospira_user');
+                window.location.href = 'login.html';
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                errorAlert.style.display = 'none';
+                successAlert.style.display = 'none';
+
+                if (newPwd.value !== newPwdConfirm.value) {
+                    errorAlert.textContent = "Les nouveaux mots de passe ne correspondent pas.";
+                    errorAlert.style.display = 'block';
+                    return;
+                }
+
+                btn.classList.add('btn-loading');
+                btn.disabled = true;
+
+                try {
+                    await ApiClient.changePassword(oldPwd.value, newPwd.value);
+                    localStorage.removeItem('hospira_token');
+                    localStorage.removeItem('hospira_user');
+                    successAlert.textContent = "Mot de passe modifié avec succès. Veuillez vous reconnecter.";
+                    successAlert.style.display = 'block';
+                    setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+                } catch (error) {
+                    errorAlert.textContent = error.message || "Une erreur est survenue.";
+                    errorAlert.style.display = 'block';
+                } finally {
+                    btn.classList.remove('btn-loading');
+                    btn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

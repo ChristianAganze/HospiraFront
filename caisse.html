@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caisse -Hospira</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body class="dashboard-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Hospi<span style="color:var(--secondary-color)">ra</span></h2>
+            <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Menu" style="display: none; background: none; border: none; color: var(--primary-color); cursor: pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+        </div>
+        
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link active" id="nav-caisse">
+                    <svg xmlns="http://www.w3.org/2000/svg"viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    Paiements & Factures
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="topbar">
+            <h1 id="page-title">Caisse</h1>
+            
+            <div class="topbar-user" style="position: relative; cursor: pointer;" id="topbar-user-menu">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="text-align: right;">
+                        <h4 id="user-name-top" style="margin: 0; font-size: 0.95rem; color: var(--primary-dark);">Chargement...</h4>
+                        <span id="user-role-top" style="font-size: 0.8rem; color: var(--text-muted);">Caissier</span>
+                    </div>
+                    <img id="topbar-user-img" src="" alt="Profile" style="display: none; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);">
+                    <div class="user-avatar" id="topbar-user-initials" style="width: 40px; height: 40px; font-size: 1.2rem;">C</div>
+                </div>
+                
+                <!-- Dropdown Menu -->
+                <div id="user-dropdown" style="display: none; position: absolute; top: 50px; right: 0; background: white; box-shadow: var(--shadow-md); border-radius: var(--radius-md); padding: 0.5rem; min-width: 150px; z-index: 100;">
+                    <button class="btn" id="btn-profil" style="width: 100%; text-align: left; background: none; color: var(--text-main); padding: 0.5rem; justify-content: flex-start;">Mon Profil</button>
+                    <button id="btn-logout" class="btn" style="width: 100%; text-align: left; background: none; color: var(--danger-color); padding: 0.5rem; justify-content: flex-start;">Déconnexion</button>
+                </div>
+            </div>
+        </header>
+
+        <section class="content-area" id="main-view">
+            
+            <!-- Vue Caisse -->
+            <div id="view-caisse">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>Factures en attente de paiement</h3>
+                </div>
+                
+                <div class="card" style="margin-bottom: 1.5rem; text-align: center; max-width: 300px;">
+                    <h4 style="color: var(--text-muted); margin-bottom: 0.5rem;">Total encaissé (Aujourd'hui)</h4>
+                    <h2 style="font-size: 2rem; color: var(--success-color); margin: 0;" id="caisse-total-jour">0 FC</h2>
+                </div>
+
+                <div class="card">
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--bg-main);">
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Réf.</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Patient</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Motif</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Montant</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="caisse-table-body">
+                                <tr><td colspan="5" class="text-center" style="padding: 2rem;">Chargement des factures...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                <div class="card" style="margin-top: 2rem;">
+                    <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">Examens Médicaux à Encaisser</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--bg-main);">
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Patient</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Examen Prescrit</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Prescrit par</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Prix</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="examens-caisse-table-body">
+                                <tr><td colspan="5" class="text-center" style="padding: 1.5rem;">Chargement des examens à encaisser...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Modal Reçu de Paiement -->
+    <div id="modal-recu" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header" style="border: none;">
+                <button class="close-btn" id="close-modal-recu">&times;</button>
+            </div>
+            
+            <div id="ticket-caisse" style="padding: 20px; border: 1px dashed #ccc; margin-bottom: 20px; text-align: left;">
+                <h2 style="margin-bottom: 5px; text-align: center;">Hôpital Hospira</h2>
+                <p style="font-size: 12px; color: #666; margin-top: 0; text-align: center;">Reçu de paiement</p>
+                <hr style="border: 1px dashed #eee; margin: 15px 0;">
+                <div style="font-size: 14px;">
+                    <p><strong>Réf :</strong> <span id="recu-ref">...</span></p>
+                    <p><strong>Patient :</strong> <span id="recu-patient">...</span></p>
+                    <p><strong>Date :</strong> <span id="recu-date">...</span></p>
+                    <p><strong>Motif :</strong> <span id="recu-motif">...</span></p>
+                </div>
+                <hr style="border: 1px dashed #eee; margin: 15px 0;">
+                <div style="text-align: right; font-size: 18px;">
+                    <strong>Total Payé : <span id="recu-montant">...</span> FC</strong>
+                </div>
+                <p style="font-size: 10px; color: #999; margin-top: 20px; text-align: center;">Veuillez vous diriger vers la salle d'attente du médecin.</p>
+            </div>
+            
+            <button id="btn-print-recu" class="btn btn-primary" style="width: 100%;">Imprimer le Reçu</button>
+        </div>
+    </div>
+
+    <!-- Modal Profil -->
+    <div id="modal-profile" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Mon Profil</h2>
+                <button class="close-btn" id="close-modal-profile">&times;</button>
+            </div>
+            <div id="profile-message" class="error-message" style="display:none; margin-bottom:1rem;"></div>
+            
+            <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem; text-align: center;">
+                <img id="profile-avatar-preview-img" src="" alt="Avatar" style="display:none; width:80px; height:80px; border-radius:50%; object-fit:cover; border:3px solid var(--primary-color); margin-bottom:0.5rem; box-shadow: var(--shadow-sm);">
+                <div id="profile-avatar-preview-initials" style="display:flex; width:80px; height:80px; border-radius:50%; background:var(--primary-color); color:white; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; margin-bottom:0.5rem; box-shadow: var(--shadow-sm);">C</div>
+                <h4 id="profile-user-fullname" style="margin:0; font-size:1.1rem; color:var(--primary-dark);">...</h4>
+                <span id="profile-user-role-badge" class="badge badge-info" style="margin-top:0.3rem;">Caissier</span>
+            </div>
+
+            <form id="form-profile">
+                <div class="form-group">
+                    <label>Changer de Photo de Profil</label>
+                    <input type="file" id="profile-image-update" class="form-control" accept="image/*">
+                </div>
+                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+                <h4 style="margin-bottom: 1rem;">Changer de mot de passe (Facultatif)</h4>
+                <div class="form-group">
+                    <label>Ancien mot de passe</label>
+                    <input type="password" id="profile-old-pwd" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Nouveau mot de passe</label>
+                    <input type="password" id="profile-new-pwd" class="form-control" minlength="6">
+                </div>
+                <button type="submit" id="btn-update-profile" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Enregistrer les modifications</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/caisse.js"></script>
+</body>
+</html>

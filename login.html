@@ -6,6 +6,15 @@
     <title>Connexion - Hospira</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/login.css">
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('hospira-theme') === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
 </head>
 <body>
 
@@ -22,14 +31,14 @@
 
             <form id="login-form" autocomplete="off">
                 <div class="form-group">
-                    <label for="email" class="form-label">Adresse Email</label>
-                    <input type="email" id="email" class="form-control" placeholder="nom@hopital.com" required autocomplete="off">
+                    <label for="email" class="form-label">Adresse Email <span class="form-hint">(ex : nom@hopital.com)</span></label>
+                    <input type="email" id="email" class="form-control" placeholder="Entrez votre adresse email" required autocomplete="off">
                 </div>
                 
                 <div class="form-group mb-3">
                     <label for="password" class="form-label">Mot de passe</label>
                     <div class="password-wrapper">
-                        <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="off">
+                        <input type="password" id="password" class="form-control" placeholder="Entrez votre mot de passe" required autocomplete="off">
                         <button type="button" id="toggle-password" class="toggle-password-btn" aria-label="Afficher le mot de passe">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </button>
@@ -106,8 +115,8 @@
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label class="form-label">Mot de passe *</label>
-                    <input type="password" id="reg-password" class="form-control" required minlength="6" autocomplete="off">
+                    <label class="form-label">Confirmer le mot de passe *</label>
+                    <input type="password" id="reg-password-confirm" class="form-control" required minlength="6" autocomplete="off">
                 </div>
 
                 <button type="submit" id="btn-register" class="btn btn-primary btn-block">
@@ -120,5 +129,6 @@
     <!-- Scripts MVVM / API -->
     <script src="js/api.js"></script>
     <script src="js/viewmodels/loginVM.js"></script>
+    <script src="js/theme.js"></script>
 </body>
 </html>

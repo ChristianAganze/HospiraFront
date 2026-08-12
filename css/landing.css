@@ -1,7 +1,7 @@
-/* landing.css - Styles spécifiques pour la page d'accueil (Stitch Style) */
+﻿/* landing.css - Styles spÃ©cifiques pour la page d'accueil (Stitch Style) */
 
 body {
-    background-color: white;
+    background-color: var(--bg-main);
     margin: 0;
     padding: 0;
     min-height: 100vh;
@@ -11,7 +11,7 @@ body {
 }
 
 .landing-container {
-    background-color: white;
+    background-color: var(--bg-main);
     width: 100%;
     min-height: 100vh;
     display: flex;
@@ -139,7 +139,7 @@ body {
 }
 
 .btn-secondary:hover {
-    background-color: #e0e7ff;
+    background-color: #aab7e1;
 }
 
 /* Right Image */
@@ -269,11 +269,11 @@ body {
 
 /* --- Nouvelles Sections (Services, A propos, Contact) --- */
 .landing-section {
-    padding: 6rem 3rem;
+    padding: 3rem 3rem;
 }
 
 .bg-light {
-    background-color: #f8fafc;
+    background-color: var(--bg-secondary);
 }
 
 .section-header {
@@ -305,7 +305,7 @@ body {
 }
 
 .service-card {
-    background: white;
+    background: var(--bg-card);
     padding: 2.5rem 2rem;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.03);
@@ -401,7 +401,7 @@ body {
     gap: 4rem;
     max-width: 1000px;
     margin: 0 auto;
-    background: white;
+    background: var(--bg-card);
     padding: 3rem;
     border-radius: 20px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.03);
@@ -608,3 +608,21 @@ body {
         margin: 0 auto;
     }
 }
+
+
+/* ===== Thème sombre - landing.css ===== */
+[data-theme="dark"] .hero-stat-card {
+    background: rgba(33, 46, 52, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .service-card {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .contact-container {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+

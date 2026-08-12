@@ -40,11 +40,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('hospira_token', response.token);
                 localStorage.setItem('hospira_user', JSON.stringify(response.user));
                 
+                // Premier login : le mot de passe doit être changé avant toute action
+                if (response.user.must_change_password) {
+                    window.location.href = 'motdepasse.html';
+                    return;
+                }
+
                 // Redirection selon le rôle
-                if (response.user.role === 'Patient') {
-                    window.location.href = 'portail-patient.html';
-                } else {
-                    window.location.href = 'dashboard.html';
+                const roleLower = response.user.role.toLowerCase();
+                switch (roleLower) {
+                    case 'patient':
+                        window.location.href = 'portail-patient.html';
+                        break;
+                    case 'admin':
+                    case 'administrateur':
+                        window.location.href = 'admin.html';
+                        break;
+                    case 'secrétaire':
+                    case 'secretaire':
+                        window.location.href = 'secretaire.html';
+                        break;
+                    case 'caissier':
+                        window.location.href = 'caisse.html';
+                        break;
+                    case 'laborantin':
+                        window.location.href = 'laborantin.html';
+                        break;
+                    case 'médecin':
+                    case 'medecin':
+                        window.location.href = 'medecin.html';
+                        break;
+                    default:
+                        alert("Erreur de redirection. Rôle inconnu : " + response.user.role);
+                        window.location.href = 'login.html';
                 }
             }
         } catch (error) {
@@ -107,12 +135,23 @@ document.addEventListener('DOMContentLoaded', () => {
             btnRegister.textContent = "Inscription en cours...";
 
             const formData = new FormData();
+
+            const password = document.getElementById('reg-password').value;
+            const passwordConfirm = document.getElementById('reg-password-confirm').value;
+            if (password !== passwordConfirm) {
+                regError.textContent = "Les mots de passe ne correspondent pas.";
+                regError.style.display = 'block';
+                btnRegister.disabled = false;
+                btnRegister.textContent = "Créer mon compte";
+                return;
+            }
+
             formData.append('nom', document.getElementById('reg-nom').value.trim());
             formData.append('prenom', document.getElementById('reg-prenom').value.trim());
             formData.append('date_naissance', document.getElementById('reg-dob').value);
             formData.append('sexe', document.getElementById('reg-sexe').value);
             formData.append('email', document.getElementById('reg-email').value.trim());
-            formData.append('password', document.getElementById('reg-password').value);
+            formData.append('password', password);
             
             const imageFile = document.getElementById('reg-image').files[0];
             if (imageFile) {

@@ -1,5 +1,5 @@
         /* Dashboard Layout */
-        body {
+        body.dashboard-layout {
             display: flex;
             height: 100vh;
             overflow: hidden;
@@ -79,6 +79,14 @@
             margin-right: 12px;
         }
 
+        .topbar .user-avatar, #topbar-user-initials {
+            background-color: var(--primary-color) !important;
+            color: #ffffff !important;
+            border: 2px solid var(--primary-light);
+            margin-right: 0;
+            box-shadow: var(--shadow-sm);
+        }
+
         .user-info h4 {
             font-size: 0.9rem;
             margin: 0;
@@ -91,18 +99,32 @@
             color: rgba(255, 255, 255, 0.7);
         }
 
-        #logout-btn {
-            background: none;
-            border: none;
-            color: var(--danger-color);
-            cursor: pointer;
+        .user-actions {
             margin-left: auto;
-            padding: 5px;
-            transition: opacity var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        #logout-btn:hover {
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity var(--transition-fast), transform var(--transition-fast);
+        }
+
+        .icon-btn:hover {
             opacity: 0.7;
+            transform: scale(1.1);
+        }
+
+        .icon-btn.danger {
+            color: var(--danger-color);
         }
 
         /* Main Content */
@@ -157,6 +179,8 @@
             max-width: 500px;
             box-shadow: var(--shadow-lg);
             animation: slideIn var(--transition-fast);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         @keyframes slideIn {
@@ -248,12 +272,14 @@
             }
 
             .user-profile {
-                padding: 0;
-                border-top: none;
+                padding: 1rem 1.5rem;
+                border-top: 1px solid rgba(0,0,0,0.05);
+                justify-content: space-between;
             }
 
             .user-info {
-                display: none; /* Cache le nom complet sur mobile pour gagner de la place */
+                display: block;
+                margin-right: auto;
             }
 
             .topbar {

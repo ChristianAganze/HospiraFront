@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Médecin - Hospira</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body class="dashboard-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Hospi<span style="color:var(--secondary-color)">ra</span></h2>
+            <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Menu" style="display: none; background: none; border: none; color: var(--primary-color); cursor: pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+        </div>
+        
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link active" id="nav-dashboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    File d'attente
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="nav-consultation" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Consultation
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="topbar">
+            <h1 id="page-title">Espace Clinique</h1>
+            
+            <div class="topbar-user" style="position: relative; cursor: pointer;" id="topbar-user-menu">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="text-align: right;">
+                        <h4 id="user-name-top" style="margin: 0; font-size: 0.95rem; color: var(--primary-dark);">Chargement...</h4>
+                        <span id="user-role-top" style="font-size: 0.8rem; color: var(--text-muted);">Médecin</span>
+                    </div>
+                    <img id="topbar-user-img" src="" alt="Profile" style="display: none; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);">
+                    <div class="user-avatar" id="topbar-user-initials" style="width: 40px; height: 40px; font-size: 1.2rem;">M</div>
+                </div>
+                
+                <!-- Dropdown Menu -->
+                <div id="user-dropdown" style="display: none; position: absolute; top: 50px; right: 0; background: white; box-shadow: var(--shadow-md); border-radius: var(--radius-md); padding: 0.5rem; min-width: 150px; z-index: 100;">
+                    <button class="btn" id="btn-profil" style="width: 100%; text-align: left; background: none; color: var(--text-main); padding: 0.5rem; justify-content: flex-start;">Mon Profil</button>
+                    <button id="btn-logout" class="btn" style="width: 100%; text-align: left; background: none; color: var(--danger-color); padding: 0.5rem; justify-content: flex-start;">Déconnexion</button>
+                </div>
+            </div>
+        </header>
+
+        <section class="content-area" id="main-view">
+            
+            <!-- Vue File d'attente (Dashboard) -->
+            <div id="view-dashboard">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>Mes Patients du jour</h3>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+                    <div class="card">
+                        <h4 style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 1rem; margin-top: 0; display:flex; justify-content:space-between; align-items:center;">
+                            <span>Salle d'attente (Confirmés)</span>
+                            <button id="btn-refresh" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem;">Actualiser</button>
+                        </h4>
+                        <div id="medecin-file-attente">
+                            <p class="text-muted text-center mt-2">Chargement...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vue Consultation -->
+            <div id="view-consultation" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div>
+                        <h2 style="margin: 0; color: var(--text-main);" id="consultation-patient-name">Dossier Patient</h2>
+                        <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;" id="consultation-patient-info">Sélectionnez un patient pour commencer la consultation</p>
+                    </div>
+                    <button class="btn btn-secondary" id="btn-back-dashboard">Retour à la salle d'attente</button>
+                </div>
+
+                <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                    
+                    <!-- Historique (Colonne Gauche) -->
+                    <div style="flex: 1; min-width: 300px;">
+                        <div class="card" style="height: 100%;">
+                            <h3 style="margin-top: 0;">Historique Médical</h3>
+                            <div id="consultation-historique" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+                                <p class="text-center text-muted">Aucun historique disponible.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nouvelle Consultation (Colonne Droite) -->
+                    <div style="flex: 2; min-width: 350px;">
+                        <div class="card">
+                            <h3 style="margin-top: 0; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 10px;">Nouvelle Consultation</h3>
+                            
+                            <form id="form-nouvelle-consultation">
+                                <input type="hidden" id="cons-patient-id">
+                                <input type="hidden" id="cons-rendezvous-id">
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div class="form-group">
+                                        <label>Poids (kg)</label>
+                                        <input type="number" step="0.1" class="form-control" id="cons-poids">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Taille (cm)</label>
+                                        <input type="number" step="0.1" class="form-control" id="cons-taille">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Température (°C)</label>
+                                        <input type="number" step="0.1" class="form-control" id="cons-temp">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Tension (ex: 12/8)</label>
+                                        <input type="text" class="form-control" id="cons-tension">
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="margin-top: 1rem;">
+                                    <label>Symptômes <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="cons-symptomes" rows="3" required></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Diagnostic</label>
+                                    <textarea class="form-control" id="cons-diagnostic" rows="3"></textarea>
+                                </div>
+
+                                <!-- Section Ordonnance intégrée -->
+                                <div style="background: rgba(var(--primary-color-rgb), 0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(var(--primary-color-rgb), 0.1);">
+                                    <h4 style="margin-top: 0; color: var(--primary-color);">Prescription Médicale</h4>
+                                    
+                                    <div id="ordonnance-list" style="margin-bottom: 1rem;">
+                                        <!-- Liste des médicaments ajoutés -->
+                                    </div>
+
+                                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.5rem; align-items: end;">
+                                        <div class="form-group" style="margin: 0;">
+                                            <label style="font-size: 0.8rem;">Médicament</label>
+                                            <input type="text" class="form-control" id="presc-medicament" placeholder="Nom du médicament">
+                                        </div>
+                                        <div class="form-group" style="margin: 0;">
+                                            <label style="font-size: 0.8rem;">Posologie</label>
+                                            <input type="text" class="form-control" id="presc-posologie" placeholder="Ex: 1 matin, 1 soir">
+                                        </div>
+                                        <button type="button" class="btn btn-secondary" id="btn-add-medicament">Ajouter</button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="margin-top: 1.5rem;">
+                                    <label style="font-weight: 600; color: var(--primary-color);">Prescrire des Examens de Laboratoire</label>
+                                    <select id="cons-examens" class="form-control" multiple style="height: 110px;">
+                                        <!-- Loaded via JS -->
+                                    </select>
+                                    <small style="color: var(--text-muted);">Maintenez Ctrl (ou Cmd sur Mac) pour sélectionner plusieurs examens.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Notes complémentaires</label>
+                                    <textarea class="form-control" id="cons-notes" rows="2"></textarea>
+                                </div>
+
+                                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('form-nouvelle-consultation').reset()">Effacer</button>
+                                    <button type="submit" class="btn btn-primary">Terminer la consultation</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Modal Profil -->
+    <div id="modal-profile" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Mon Profil</h2>
+                <button class="close-btn" id="close-modal-profile">&times;</button>
+            </div>
+            <div id="profile-message" class="error-message" style="display:none; margin-bottom:1rem;"></div>
+            
+            <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem; text-align: center;">
+                <img id="profile-avatar-preview-img" src="" alt="Avatar" style="display:none; width:80px; height:80px; border-radius:50%; object-fit:cover; border:3px solid var(--primary-color); margin-bottom:0.5rem; box-shadow: var(--shadow-sm);">
+                <div id="profile-avatar-preview-initials" style="display:flex; width:80px; height:80px; border-radius:50%; background:var(--primary-color); color:white; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; margin-bottom:0.5rem; box-shadow: var(--shadow-sm);">M</div>
+                <h4 id="profile-user-fullname" style="margin:0; font-size:1.1rem; color:var(--primary-dark);">...</h4>
+                <span id="profile-user-role-badge" class="badge badge-info" style="margin-top:0.3rem;">Médecin</span>
+            </div>
+
+            <form id="form-profile">
+                <div class="form-group">
+                    <label>Changer de Photo de Profil</label>
+                    <input type="file" id="profile-image-update" class="form-control" accept="image/*">
+                </div>
+                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+                <h4 style="margin-bottom: 1rem;">Changer de mot de passe (Facultatif)</h4>
+                <div class="form-group">
+                    <label>Ancien mot de passe</label>
+                    <input type="password" id="profile-old-pwd" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Nouveau mot de passe</label>
+                    <input type="password" id="profile-new-pwd" class="form-control" minlength="6">
+                </div>
+                <button type="submit" id="btn-update-profile" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Enregistrer les modifications</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/medecin.js"></script>
+</body>
+</html>

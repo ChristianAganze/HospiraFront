@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portail Laboratoire - Hospira</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body class="dashboard-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Hospi<span>ra</span></h2>
+            <span style="font-size:0.75rem; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px;">Laboratoire</span>
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link active" id="nav-labo-queue">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    File d'Attente Examens
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <h1>Espace Laboratoire & Analyses</h1>
+            
+            <div class="topbar-user" style="position: relative; cursor: pointer;" id="topbar-user-menu">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="text-align: right;">
+                        <h4 id="user-name-top" style="margin: 0; font-size: 0.95rem; color: var(--primary-dark);">Laborantin</h4>
+                        <span id="user-role-top" style="font-size: 0.8rem; color: var(--text-muted);">Laborantin</span>
+                    </div>
+                    <img id="topbar-user-img" src="" alt="Profile" style="display: none; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);">
+                    <div class="user-avatar" id="topbar-user-initials" style="width: 40px; height: 40px; font-size: 1.2rem;">L</div>
+                </div>
+                
+                <!-- Dropdown Menu -->
+                <div id="user-dropdown" style="display: none; position: absolute; top: 50px; right: 0; background: white; box-shadow: var(--shadow-md); border-radius: var(--radius-md); padding: 0.5rem; min-width: 150px; z-index: 100;">
+                    <button class="btn" id="btn-profil" style="width: 100%; text-align: left; background: none; color: var(--text-main); padding: 0.5rem; justify-content: flex-start;">Mon Profil</button>
+                    <button id="btn-logout" class="btn" style="width: 100%; text-align: left; background: none; color: var(--danger-color); padding: 0.5rem; justify-content: flex-start;">Déconnexion</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <section class="content-area">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div>
+                    <h2 style="margin: 0;">Patients en attente d'examens</h2>
+                    <p style="color: var(--text-muted); margin: 0.2rem 0 0 0;">Les examens réglés à la caisse apparaissent ici avec leur numéro de ticket.</p>
+                </div>
+                <button class="btn btn-secondary" onclick="loadLaboQueue()">🔄 Actualiser la liste</button>
+            </div>
+
+            <!-- Table File d'attente -->
+            <div class="card">
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--bg-main);">
+                                <th style="padding: 1rem;">Ticket N°</th>
+                                <th style="padding: 1rem;">Patient</th>
+                                <th style="padding: 1rem;">Examen Prescrit</th>
+                                <th style="padding: 1rem;">Prescrit par</th>
+                                <th style="padding: 1rem;">Statut</th>
+                                <th style="padding: 1rem; text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-labo-queue">
+                            <tr>
+                                <td colspan="6" class="text-center" style="padding: 2rem;">Chargement des examens...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Saisie de Résultat d'Examen -->
+    <div id="modal-resultat" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Saisir le Résultat de l'Examen</h2>
+                <button class="close-modal" id="close-modal-resultat">&times;</button>
+            </div>
+            <form id="form-resultat" enctype="multipart/form-data">
+                <input type="hidden" id="res-prescription-id">
+                
+                <div style="background: var(--bg-main); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+                    <strong id="res-patient-name" style="font-size: 1.1rem; color: var(--primary-color);">Patient Name</strong><br>
+                    <span id="res-examen-nom" style="font-weight: 600;">Examen Nom</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Compte-rendu & Observations <span class="text-danger">*</span></label>
+                    <textarea id="res-texte" class="form-control" rows="5" placeholder="Rédigez les résultats d'analyse, valeurs mesurées et conclusions..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Joindre un fichier / Fiche d'analyse (Facultatif)</label>
+                    <input type="file" id="res-fichier" class="form-control" accept="image/*,.pdf,.doc,.docx">
+                    <small style="color: var(--text-muted);">PDF, image, scanner d'analyse.</small>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block mt-3">Enregistrer et Publier le résultat</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Profil -->
+    <div id="modal-profile" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Mon Profil</h2>
+                <button class="close-modal" id="close-modal-profile">&times;</button>
+            </div>
+            <div id="profile-message" class="error-message" style="display:none; margin-bottom:1rem;"></div>
+            
+            <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem; text-align: center;">
+                <img id="profile-avatar-preview-img" src="" alt="Avatar" style="display:none; width:80px; height:80px; border-radius:50%; object-fit:cover; border:3px solid var(--primary-color); margin-bottom:0.5rem; box-shadow: var(--shadow-sm);">
+                <div id="profile-avatar-preview-initials" style="display:flex; width:80px; height:80px; border-radius:50%; background:var(--primary-color); color:white; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; margin-bottom:0.5rem; box-shadow: var(--shadow-sm);">L</div>
+                <h4 id="profile-user-fullname" style="margin:0; font-size:1.1rem; color:var(--primary-dark);">...</h4>
+                <span id="profile-user-role-badge" class="badge badge-info" style="margin-top:0.3rem;">Laborantin</span>
+            </div>
+
+            <form id="form-profile">
+                <div class="form-group">
+                    <label>Changer de Photo de Profil</label>
+                    <input type="file" id="profile-image-update" class="form-control" accept="image/*">
+                </div>
+                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+                <h4 style="margin-bottom: 1rem;">Changer de mot de passe (Facultatif)</h4>
+                <div class="form-group">
+                    <label>Ancien mot de passe</label>
+                    <input type="password" id="profile-old-pwd" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Nouveau mot de passe</label>
+                    <input type="password" id="profile-new-pwd" class="form-control" minlength="6">
+                </div>
+                <button type="submit" id="btn-update-profile" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Enregistrer les modifications</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/laborantin.js"></script>
+</body>
+</html>

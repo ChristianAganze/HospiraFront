@@ -1,5 +1,5 @@
         body {
-            /* Beautiful gradient background for login page */
+        
             background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-main) 100%);
             display: flex;
             align-items: center;
@@ -91,3 +91,16 @@
                 font-size: 1.75rem;
             }
         }
+
+
+/* ===== Thème sombre - login.css ===== */
+[data-theme="dark"] body {
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-main) 100%);
+}
+
+[data-theme="dark"] .glass-card {
+    background: rgba(33, 46, 52, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.55);
+}
+
