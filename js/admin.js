@@ -73,15 +73,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Navigation Sidebar
     const navDashboard = document.getElementById('nav-dashboard');
     const navStaff = document.getElementById('nav-staff');
+    const navMessages = document.getElementById('nav-messages');
     
     const viewDashboard = document.getElementById('view-dashboard-admin');
     const viewStaff = document.getElementById('view-staff');
+    const viewMessages = document.getElementById('view-messages');
 
     function switchView(activeNav, activeView) {
         // Reset navs
-        [navDashboard, navStaff].forEach(nav => nav.classList.remove('active'));
+        [navDashboard, navStaff, navMessages].forEach(nav => nav.classList.remove('active'));
         // Reset views
-        [viewDashboard, viewStaff].forEach(view => view.style.display = 'none');
+        [viewDashboard, viewStaff, viewMessages].forEach(view => view.style.display = 'none');
         
         // Set active
         activeNav.classList.add('active');
@@ -102,6 +104,12 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         switchView(navStaff, viewStaff);
         loadStaff();
+    });
+
+    navMessages.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchView(navMessages, viewMessages);
+        loadMessages();
     });
 
     // 4. Charger Statistiques Dashboard
@@ -286,7 +294,94 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 6. Init
+    // 6. Messages de Contact
+    function loadMessages() {
+        ApiClient.request('/api/contact/messages', 'GET')
+            .then(res => {
+                const messages = (res && res.data) ? res.data : [];
+                const tbody = document.getElementById('messages-table-body');
+                tbody.innerHTML = '';
+
+                const nonlus = messages.filter(m => m.statut === 'nouveau').length;
+                document.getElementById('messages-nonlus').textContent = nonlus > 0
+                    ? `${nonlus} nouveau(x) message(s)`
+                    : 'Aucun nouveau message';
+
+                if (messages.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2rem;">Aucun message de contact pour le moment.</td></tr>';
+                    return;
+                }
+
+                messages.forEach(m => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
+                    const isNouveau = m.statut === 'nouveau';
+                    tr.innerHTML = `
+                        <td style="padding: 1rem 0.5rem; font-weight: 500;">${escapeHtml(m.nom)}</td>
+                        <td style="padding: 1rem 0.5rem; color: var(--text-muted);">${escapeHtml(m.email)}</td>
+                        <td style="padding: 1rem 0.5rem; color: var(--text-main); max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(m.message)}">${escapeHtml(m.message)}</td>
+                        <td style="padding: 1rem 0.5rem; color: var(--text-muted);">${escapeHtml(m.created_at || '')}</td>
+                        <td style="padding: 1rem 0.5rem;">
+                            ${isNouveau
+                                ? '<span style="background:rgba(245,158,11,0.12); color:#b45309; padding:4px 12px; border-radius:20px; font-weight:600; font-size:0.85rem;">Nouveau</span>'
+                                : '<span style="background:rgba(16,185,129,0.12); color:var(--success-color); padding:4px 12px; border-radius:20px; font-weight:600; font-size:0.85rem;">Lu</span>'}
+                        </td>
+                        <td style="padding: 1rem 0.5rem; text-align: right;">
+                            ${isNouveau ? `<button class="btn btn-secondary" onclick="markMessageRead(${m.id})" style="padding:0.3rem 0.6rem; font-size:0.8rem;">Marquer lu</button>` : ''}
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(error => {
+                console.error("Erreur messages de contact:", error);
+                document.getElementById('messages-table-body').innerHTML = `<tr><td colspan="6" class="text-center text-danger">Erreur: ${escapeHtml(error.message)}</td></tr>`;
+            });
+    }
+
+    function escapeHtml(str) {
+        return String(str == null ? '' : str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    window.markMessageRead = function(id) {
+        ApiClient.request(`/api/contact/messages/${id}/read`, 'POST')
+            .then(() => {
+                showToast("Message marqué comme lu.", "success");
+                loadMessages();
+            })
+            .catch(err => showToast("Erreur : " + err.message, "danger"));
+    };
+
+    document.getElementById('btn-mark-all-read').addEventListener('click', () => {
+        ApiClient.request('/api/contact/messages/read-all', 'POST')
+            .then(() => {
+                showToast("Tous les messages sont marqués comme lus.", "success");
+                loadMessages();
+            })
+            .catch(err => showToast("Erreur : " + err.message, "danger"));
+    });
+
+    // 7. Polling notifications (nouveaux messages de contact, RDV, etc.)
+    setInterval(() => {
+        ApiClient.request('/api/notifications', 'GET')
+            .then(data => {
+                if (data && data.length > 0) {
+                    data.forEach(notif => {
+                        showToast(notif.message, "info");
+                        ApiClient.request(`/api/notifications/${notif.id}/read`, 'POST');
+                    });
+                    // Rafraîchir la liste si la vue messages est ouverte
+                    if (viewMessages.style.display === 'block') {
+                        loadMessages();
+                    }
+                }
+            })
+            .catch(() => {});
+    }, 30000);
+
+    // 8. Init
     loadDashboardStats();
 
     // Système de Toast
@@ -295,23 +390,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!container) return;
 
         const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `
-            <span>${message}</span>
-            <button onclick="this.parentElement.remove()" style="background:none; border:none; color:white; cursor:pointer;">&times;</button>
-        `;
-        
+        toast.className = 'toast-notification';
+        const accent = type === 'danger' ? 'var(--danger-color)'
+            : type === 'warning' ? 'var(--warning-color)'
+            : type === 'info' ? 'var(--info-color)'
+            : 'var(--success-color)';
+        toast.style.borderLeftColor = accent;
+
+        const content = document.createElement('span');
+        content.className = 'toast-content';
+        content.textContent = message;
+
+        const close = document.createElement('button');
+        close.className = 'toast-close';
+        close.innerHTML = '&times;';
+        close.onclick = () => toast.remove();
+
+        toast.appendChild(content);
+        toast.appendChild(close);
         container.appendChild(toast);
-        
-        // Force reflow pour l'animation
-        toast.offsetHeight;
-        toast.style.opacity = '1';
-        toast.style.transform = 'translateY(0)';
 
         setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(100%)';
-            setTimeout(() => toast.remove(), 300);
+            toast.style.animation = 'fadeOutRight 0.4s forwards';
+            setTimeout(() => toast.remove(), 400);
         }, 5000);
     }
 });

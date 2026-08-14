@@ -32,6 +32,12 @@
                     Gestion du Personnel
                 </a>
             </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="nav-messages">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    Messages de Contact
+                </a>
+            </li>
         </ul>
     </aside>
 
@@ -108,6 +114,37 @@
                             </thead>
                             <tbody id="staff-table-body">
                                 <tr><td colspan="6" class="text-center" style="padding: 2rem;">Chargement du personnel...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vue Messages de Contact -->
+            <div id="view-messages" style="display: none;">
+                <div class="card">
+                    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <h3 style="margin:0;">Messages de Contact</h3>
+                        <div class="page-header-actions" style="display: flex; gap: 0.75rem; align-items: center;">
+                            <span id="messages-nonlus" style="font-size: 0.85rem; color: var(--text-muted);"></span>
+                            <button class="btn btn-secondary" id="btn-mark-all-read" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Tout marquer lu</button>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--bg-main);">
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Nom</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Email</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Message</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Date</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Statut</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500; text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="messages-table-body">
+                                <tr><td colspan="6" class="text-center" style="padding: 2rem;">Chargement des messages...</td></tr>
                             </tbody>
                         </table>
                     </div>
