@@ -197,10 +197,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const patientNom = rdv.patient ? rdv.patient.nom : (rdv.patient_nom || '');
                     const medecinNom = rdv.medecin ? rdv.medecin.nom : (rdv.medecin_nom || '');
                     const medecinPrenom = rdv.medecin ? rdv.medecin.prenom : (rdv.medecin_prenom || '');
+                    const medecinSpecialite = rdv.medecin ? rdv.medecin.specialite : (rdv.medecin_specialite || null);
                     
                     const hasPreuve = rdv.preuve_paiement_path ? `<br><span class="badge badge-info" style="font-size:0.7rem;">💳 Reçu Joint</span>` : '';
                     let statutBadge = `<span class="badge" style="background:var(--secondary-color); color:white;">En attente</span>${hasPreuve}`;
-                    let actionBtn = `<button class="btn btn-primary" onclick="openValiderModal(${rdv.id}, '${rdv.preuve_paiement_path || ''}')" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Valider</button>`;
+                    let actionBtn = `<button class="btn btn-primary" onclick="openValiderModal(${rdv.id}, '${rdv.preuve_paiement_path || ''}', ${rdv.medecin ? rdv.medecin.id : 'null'})" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Affecter & Valider</button>`;
                     
                     if(rdv.statut === 'À payer') {
                         statutBadge = `<span class="badge bg-warning">À payer</span>${hasPreuve}`;
@@ -223,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${dateStr} <br><small style="color:var(--text-muted); font-weight:normal;">${statutBadge}</small>
                         </td>
                         <td style="padding: 1rem 0.5rem;">${patientPrenom} ${patientNom}</td>
-                        <td style="padding: 1rem 0.5rem;">${medecinNom ? 'Dr. ' + medecinPrenom + ' ' + medecinNom : 'Non assigné'}</td>
+                        <td style="padding: 1rem 0.5rem;">${medecinNom ? 'Dr. ' + medecinPrenom + ' ' + medecinNom + (medecinSpecialite ? ' <small style="color:var(--text-muted);">(' + medecinSpecialite + ')</small>' : '') : '<span style="background:rgba(245,158,11,0.12); color:#b45309; padding:4px 12px; border-radius:20px; font-weight:600; font-size:0.85rem;">À affecter</span>'}</td>
                         <td style="padding: 1rem 0.5rem; color: var(--text-muted);">${rdv.motif || '-'}</td>
                         <td style="padding: 1rem 0.5rem;">${actionBtn}</td>
                     `;
@@ -256,9 +257,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ApiClient.request('/api/users/staff', 'GET')
             .then(staff => {
                 const select = document.getElementById('rdv-medecin-select');
-                select.innerHTML = '<option value="">Aucun médecin spécifique</option>';
-                staff.filter(s => s.role === 'Medecin').forEach(m => {
-                    select.innerHTML += `<option value="${m.id}">Dr. ${m.prenom} ${m.nom}</option>`;
+                select.innerHTML = '<option value="">(Facultatif)</option>';
+                staff.filter(s => s.role === 'Medecin' && !(s.is_assistant == 1)).forEach(m => {
+                    select.innerHTML += `<option value="${m.id}">Dr. ${m.prenom} ${m.nom}${m.specialite ? ` — ${m.specialite}` : ''}</option>`;
                 });
             });
     });
@@ -288,10 +289,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalValider = document.getElementById('modal-valider');
     const formValider = document.getElementById('form-valider');
     
-    window.openValiderModal = function(id, preuvePath) {
+    window.openValiderModal = function(id, preuvePath, medecinId) {
         document.getElementById('valider-rdv-id').value = id;
         document.getElementById('valider-ticket').value = 'T-' + Math.floor(100 + Math.random() * 900);
         document.getElementById('valider-direct').checked = false;
+
+        // Charger les médecins (avec spécialité) et pré-sélectionner celui déjà affecté
+        ApiClient.request('/api/medecins', 'GET')
+            .then(res => {
+                const medecins = (res && res.records) ? res.records : [];
+                const select = document.getElementById('valider-medecin-select');
+                select.innerHTML = '<option value="">— Choisir un médecin spécialisé —</option>';
+                medecins.forEach(m => {
+                    const label = `Dr. ${m.prenom} ${m.nom}` + (m.specialite ? ` — ${m.specialite}` : '');
+                    select.innerHTML += `<option value="${m.id}"${String(m.id) === String(medecinId) ? ' selected' : ''}>${label}</option>`;
+                });
+            })
+            .catch(() => {});
 
         const preuveContainer = document.getElementById('valider-preuve-container');
         const preuveLink = document.getElementById('valider-preuve-link');
@@ -314,17 +328,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = document.getElementById('valider-rdv-id').value;
         const ticket = document.getElementById('valider-ticket').value.trim();
         const validerDirect = document.getElementById('valider-direct').checked;
+        const medecinId = document.getElementById('valider-medecin-select').value;
         
+        if (!medecinId) {
+            showToast("Veuillez affecter un médecin avant de valider.", "danger");
+            return;
+        }
+
         try {
             await ApiClient.request(`/api/rendezvous/${id}/valider`, 'PUT', { 
                 numero_passage: ticket,
+                medecin_id: medecinId,
                 valider_directement: validerDirect 
             });
             modalValider.style.display = 'none';
             loadRendezvous();
             const msg = validerDirect 
-                ? "Rendez-vous validé directement (Paiement confirmé) ! Le médecin a été notifié."
-                : "Rendez-vous validé ! Le patient est envoyé à la caisse.";
+                ? "Rendez-vous validé et affecté ! Le médecin a été notifié."
+                : "Rendez-vous validé et affecté ! Le patient est envoyé à la caisse.";
             showToast(msg, "success");
         } catch(error) {
             showToast("Erreur: " + error.message, "danger");

@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/responsive.css">
     <style>
         .patient-view { display: none; animation: fadeIn 0.3s ease-in-out; }
         .patient-view.active { display: block; }
@@ -154,7 +155,7 @@
 
             <!-- ================= VUE 2 : MES RENDEZ-VOUS (DÉDIÉE) ================= -->
             <div id="view-rendezvous" class="patient-view">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                     <div>
                         <h2 style="margin: 0;">Mes Rendez-vous</h2>
                         <p style="color: var(--text-muted); margin: 0.2rem 0 0 0;">Suivez l'état de vos demandes et votre ordre de passage.</p>
@@ -233,10 +234,9 @@
             </div>
             <form id="form-new-rdv">
                 <div class="form-group">
-                    <label class="form-label">Médecin</label>
-                    <select id="rdv-medecin" class="form-control" required>
-                        <option value="">Sélectionnez un médecin</option>
-                    </select>
+                    <p style="margin: 0 0 0.5rem 0; background: var(--bg-input); padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.9rem; color: var(--text-main);">
+                        🩺 Décrivez votre situation : un <strong>médecin spécialisé</strong> vous sera affecté par notre secrétaire selon vos symptômes.
+                    </p>
                 </div>
                 
                 <div style="display: flex; gap: 1rem;">
@@ -252,7 +252,7 @@
 
                 <div class="form-group">
                     <label class="form-label">Motif de la consultation</label>
-                    <textarea id="rdv-motif" class="form-control" rows="3" required placeholder="Décrivez brièvement vos symptômes..."></textarea>
+                    <textarea id="rdv-motif" class="form-control" rows="3" required placeholder="Décrivez brièvement votre situation (symptômes, douleurs, motifs de consultation...)" ></textarea>
                 </div>
 
                 <div class="form-group">
@@ -396,20 +396,6 @@
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('rdv-date').setAttribute('min', today);
 
-            // Fetch Doctors
-            async function loadMedecins() {
-                try {
-                    const response = await ApiClient.request('/api/medecins', 'GET');
-                    const select = document.getElementById('rdv-medecin');
-                    if (response && response.records) {
-                        select.innerHTML = '<option value="">Sélectionnez un médecin</option>';
-                        response.records.forEach(med => {
-                            select.innerHTML += `<option value="${med.id}">Dr. ${med.prenom} ${med.nom}</option>`;
-                        });
-                    }
-                } catch(err) { console.error('Erreur médecins', err); }
-            }
-
             // Fetch Rendez-vous
             async function loadMyRendezvous() {
                 const list = document.getElementById('rdv-dedicated-list');
@@ -425,7 +411,8 @@
                                 .filter(r => r.statut !== 'Annulé' && new Date(r.date_heure) >= new Date())
                                 .sort((a, b) => new Date(a.date_heure) - new Date(b.date_heure));
                             const next = upcoming[0] || myRdv[0];
-                            document.getElementById('dash-next-rdv-text').textContent = `${new Date(next.date_heure).toLocaleDateString('fr-FR')} - Dr. ${next.medecin_nom}`;
+                            const sp = next.medecin_specialite ? ` (${next.medecin_specialite})` : '';
+                            document.getElementById('dash-next-rdv-text').textContent = `${new Date(next.date_heure).toLocaleDateString('fr-FR')} - Dr. ${next.medecin_nom || 'à affecter'}${sp}`;
                         } else {
                             document.getElementById('dash-next-rdv-text').textContent = 'Aucun RDV à venir';
                         }
@@ -444,7 +431,7 @@
                                 return `
                                     <div class="card" style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                                         <div>
-                                            <h4 style="margin: 0; font-size: 1.1rem; color: var(--primary-dark);">Dr. ${r.medecin_prenom} ${r.medecin_nom}</h4>
+                                            <h4 style="margin: 0; font-size: 1.1rem; color: var(--primary-dark);">Dr. ${r.medecin_nom || 'En attente d\'affectation'}${r.medecin_specialite ? ` <small style="color:var(--text-muted); font-weight:normal;">(${r.medecin_specialite})</small>` : ''}</h4>
                                             <p style="margin: 0.2rem 0; color: var(--text-muted); font-size: 0.9rem;">
                                                 📅 ${new Date(r.date_heure).toLocaleString('fr-FR')} | Motif : ${r.motif || 'Consultation'}
                                             </p>
@@ -551,7 +538,6 @@
 
                 const formData = new FormData();
                 formData.append('patient_id', user.patient_id);
-                formData.append('medecin_id', document.getElementById('rdv-medecin').value);
                 
                 const dateVal = document.getElementById('rdv-date').value;
                 const timeVal = document.getElementById('rdv-time').value;
@@ -575,7 +561,6 @@
             });
 
             // Initial Execution
-            loadMedecins();
             loadMyRendezvous();
             loadMyConsultations();
             loadMyExamensAndFactures();

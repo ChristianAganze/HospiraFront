@@ -6,6 +6,7 @@
     <title>Administration - Hospira</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body class="dashboard-layout">
 
@@ -88,7 +89,7 @@
             <!-- Vue Staff -->
             <div id="view-staff" style="display: none;">
                 <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                         <h3 style="margin:0;">Gestion du Personnel</h3>
                         <button class="btn btn-primary" id="btn-add-staff">+ Nouveau Membre</button>
                     </div>
@@ -99,13 +100,14 @@
                                 <tr style="border-bottom: 2px solid var(--bg-main);">
                                     <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Nom complet</th>
                                     <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Rôle</th>
+                                    <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Spécialité</th>
                                     <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Email</th>
                                     <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500;">Date d'ajout</th>
                                     <th style="padding: 1rem 0.5rem; color: var(--text-muted); font-weight: 500; text-align: right;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="staff-table-body">
-                                <tr><td colspan="5" class="text-center" style="padding: 2rem;">Chargement du personnel...</td></tr>
+                                <tr><td colspan="6" class="text-center" style="padding: 2rem;">Chargement du personnel...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -147,6 +149,23 @@
                         <option value="Laborantin">Laborantin</option>
                         <option value="Admin">Administrateur</option>
                     </select>
+                </div>
+                <div class="form-group" id="staff-specialite-group" style="display: none;">
+                    <label>Spécialité médicale</label>
+                    <input type="text" id="staff-specialite" class="form-control" placeholder="Ex: Cardiologie, Pédiatrie, Gynécologie...">
+                    <small style="color: var(--text-muted);">Permet à la secrétaire de trier les demandes des patients vers le bon spécialiste.</small>
+                </div>
+                <div class="form-group" id="staff-assistant-group" style="display: none;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="staff-assistant" style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="staff-assistant" style="margin: 0; cursor: pointer; font-weight: 500;">Compte assistant (agit pour le médecin)</label>
+                    </div>
+                    <div id="staff-superviseur-group" style="display: none; margin-top: 0.5rem;">
+                        <label>Assiste le médecin</label>
+                        <select id="staff-superviseur" class="form-control">
+                            <option value="">Sélectionnez le médecin</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Photo de profil</label>

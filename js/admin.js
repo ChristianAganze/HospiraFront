@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tbody.innerHTML = '';
                 
                 if (!staff || staff.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="padding: 2rem;">Aucun membre du personnel enregistré.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2rem;">Aucun membre du personnel enregistré.</td></tr>';
                     return;
                 }
 
@@ -143,11 +143,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         ? `<img src="${ApiClient.staticUrl(member.profile_image)}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; vertical-align:middle; margin-right:8px;">`
                         : `<span style="display:inline-block; width:30px; height:30px; border-radius:50%; background:var(--primary-color); color:white; text-align:center; line-height:30px; font-weight:bold; font-size:0.8rem; margin-right:8px;">${(member.prenom || 'S').charAt(0).toUpperCase()}</span>`;
 
+                    const specialiteHtml = (member.specialite || (member.is_assistant == 1 ? 'Assistant' : ''))
+                        ? `<small style="color: var(--text-muted);">${member.specialite || ''}${member.is_assistant == 1 ? '<br>🩺 Assistant' : ''}</small>`
+                        : '-';
+
                     const tr = document.createElement('tr');
                     tr.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
                     tr.innerHTML = `
                         <td style="padding: 1rem 0.5rem; font-weight: 500;">${imgHtml} ${member.prenom} ${member.nom}</td>
                         <td style="padding: 1rem 0.5rem;"><span class="badge ${getRoleBadgeClass(member.role)}">${member.role}</span></td>
+                        <td style="padding: 1rem 0.5rem;">${specialiteHtml}</td>
                         <td style="padding: 1rem 0.5rem; color: var(--text-muted);">${member.email}</td>
                         <td style="padding: 1rem 0.5rem; color: var(--text-muted);">${date}</td>
                         <td style="padding: 1rem 0.5rem; text-align: right;">
@@ -159,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch(error => {
                 console.error("Erreur personnel:", error);
-                document.getElementById('staff-table-body').innerHTML = `<tr><td colspan="5" class="text-center text-danger">Erreur: ${error.message}</td></tr>`;
+                document.getElementById('staff-table-body').innerHTML = `<tr><td colspan="6" class="text-center text-danger">Erreur: ${error.message}</td></tr>`;
             });
     }
 
@@ -193,10 +198,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const formStaff = document.getElementById('form-staff');
     const staffMessage = document.getElementById('staff-message');
 
+    const specialiteGroup = document.getElementById('staff-specialite-group');
+    const assistantGroup = document.getElementById('staff-assistant-group');
+    const superviseurGroup = document.getElementById('staff-superviseur-group');
+    const roleSelect = document.getElementById('staff-role');
+    const assistantCheck = document.getElementById('staff-assistant');
+
+    // Charger les médecins pour le select "assiste le médecin"
+    function loadSuperviseurOptions(selectedId) {
+        const select = document.getElementById('staff-superviseur');
+        ApiClient.request('/api/users/staff', 'GET')
+            .then(staff => {
+                const medecins = staff.filter(s => s.role === 'Medecin' && !(s.is_assistant == 1));
+                select.innerHTML = '<option value="">Sélectionnez le médecin</option>';
+                medecins.forEach(m => {
+                    const label = `Dr. ${m.prenom} ${m.nom}` + (m.specialite ? ` — ${m.specialite}` : '');
+                    select.innerHTML += `<option value="${m.id}"${String(m.id) === String(selectedId) ? ' selected' : ''}>${label}</option>`;
+                });
+            })
+            .catch(() => {});
+    }
+
+    function updateStaffFieldsVisibility() {
+        const isMedecin = roleSelect.value === 'Medecin';
+        specialiteGroup.style.display = isMedecin ? 'block' : 'none';
+        assistantGroup.style.display = isMedecin ? 'block' : 'none';
+        superviseurGroup.style.display = (isMedecin && assistantCheck.checked) ? 'block' : 'none';
+        if (!isMedecin) assistantCheck.checked = false;
+    }
+
+    roleSelect.addEventListener('change', updateStaffFieldsVisibility);
+    assistantCheck.addEventListener('change', updateStaffFieldsVisibility);
+
     btnAddStaff.addEventListener('click', () => {
         modalStaff.style.display = 'flex';
         staffMessage.style.display = 'none';
         formStaff.reset();
+        loadSuperviseurOptions(null);
+        updateStaffFieldsVisibility();
     });
 
     btnCloseStaff.addEventListener('click', () => modalStaff.style.display = 'none');
@@ -218,6 +257,14 @@ document.addEventListener('DOMContentLoaded', () => {
         staffData.append('email', document.getElementById('staff-email').value.trim());
         staffData.append('role', document.getElementById('staff-role').value);
         staffData.append('password', document.getElementById('staff-password').value);
+
+        if (roleSelect.value === 'Medecin') {
+            staffData.append('specialite', document.getElementById('staff-specialite').value.trim() || '');
+            if (assistantCheck.checked) {
+                staffData.append('is_assistant', '1');
+                staffData.append('superviseur_id', document.getElementById('staff-superviseur').value || '');
+            }
+        }
         
         const imgFile = document.getElementById('staff-image').files[0];
         if (imgFile) {

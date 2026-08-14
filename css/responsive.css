@@ -1,0 +1,158 @@
+/* ============================================================
+   responsive.css - Adaptation mobile/tablette du front Hospira
+   Chargé APRÈS dashboard.css / login.css / landing.css
+   ============================================================ */
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* --- Tablettes & petits écrans --- */
+@media (max-width: 992px) {
+    .content-area {
+        padding: 1.5rem;
+    }
+}
+
+/* --- Mobiles --- */
+@media (max-width: 768px) {
+    /* Layout général : page défilable au lieu d'une hauteur fixe */
+    body.dashboard-layout {
+        height: auto;
+        min-height: 100vh;
+        overflow-y: auto;
+    }
+
+    .main-content {
+        overflow: visible;
+        height: auto;
+    }
+
+    /* Menu mobile : menu dans le flux (plus de chevauchement du contenu) */
+    .nav-menu {
+        position: static;
+        top: auto;
+        box-shadow: none;
+    }
+
+    .nav-link {
+        color: var(--text-main);
+    }
+
+    .nav-link svg {
+        color: var(--primary-color);
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+        color: var(--primary-color);
+        background-color: var(--bg-input);
+        border-left-color: var(--primary-color);
+    }
+
+    .mobile-menu-btn {
+        color: #fff !important;
+    }
+
+    /* Cartes */
+    .card {
+        padding: 1.25rem;
+    }
+
+    /* En-têtes de page : passage en colonne */
+    .page-header {
+        flex-direction: column;
+    }
+
+    .page-header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .page-header-actions .btn {
+        width: 100%;
+    }
+
+    #search-patient {
+        width: 100% !important;
+    }
+
+    /* Tables : largeur minimale + scroll horizontal propre */
+    .content-area table {
+        min-width: 600px;
+    }
+
+    /* Consultation médecin : colonnes pleine largeur */
+    #view-consultation > div:nth-child(2) > div {
+        flex: 1 1 100% !important;
+        min-width: 0 !important;
+    }
+
+    .grid-2 {
+        grid-template-columns: 1fr !important;
+    }
+
+    .grid-presc {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Actions de formulaire */
+    .form-actions {
+        flex-wrap: wrap;
+    }
+
+    /* Barre supérieure */
+    .topbar-user {
+        width: 100%;
+    }
+}
+
+/* --- Très petits écrans --- */
+@media (max-width: 480px) {
+    .card {
+        padding: 1rem;
+    }
+
+    .content-area {
+        padding: 0.75rem;
+    }
+
+    .topbar {
+        padding: 0.75rem;
+    }
+
+    /* Lignes en deux colonnes (formulaires) -> une seule colonne */
+    div[style*="display: flex; gap: 1rem;"],
+    div[style*="display:flex; gap: 1rem;"] {
+        flex-direction: column;
+    }
+
+    /* Notifications */
+    .toast-container {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+    }
+
+    .toast-notification {
+        min-width: 0;
+        width: 100%;
+        max-width: none;
+    }
+
+    /* Boutons larges en pleine largeur */
+    .btn-lg {
+        width: 100%;
+    }
+
+    /* Landing : logos partenaires et titre */
+    .partners-logos {
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .hero-title {
+        font-size: 1.9rem;
+    }
+}

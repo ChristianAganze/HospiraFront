@@ -115,6 +115,7 @@ a:hover {
 
 /* Utilities */
 .text-center { text-align: center; }
+.text-danger { color: var(--danger-color); }
 .mt-1 { margin-top: 0.5rem; }
 .mt-2 { margin-top: 1rem; }
 .mt-3 { margin-top: 1.5rem; }
@@ -235,7 +236,7 @@ a:hover {
 }
 
 
-/* ===== Thème sombre - main.css ===== */
+/* ===== Thï¿½me sombre - main.css ===== */
 [data-theme="dark"] .toast-notification {
     background: rgba(33, 46, 52, 0.92);
     border: 1px solid rgba(255, 255, 255, 0.1);

@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/landing.css">
+    <link rel="stylesheet" href="css/responsive.css">
     <script>
         (function () {
             try {
@@ -185,15 +186,16 @@
                         <p>contact@hospira.com</p>
                     </div>
                 </div>
-                <form class="contact-form">
-                    <div style="display:flex; gap: 1rem; margin-bottom: 1rem;">
-                        <input type="text" placeholder="Votre nom" class="form-control" required style="flex:1;">
-                        <input type="email" placeholder="Votre email" class="form-control" required style="flex:1;">
+                <form class="contact-form" id="contact-form">
+                    <div class="contact-row" style="display:flex; gap: 1rem; margin-bottom: 1rem;">
+                        <input type="text" id="contact-nom" placeholder="Votre nom" class="form-control" required style="flex:1;">
+                        <input type="email" id="contact-email" placeholder="Votre email" class="form-control" required style="flex:1;">
                     </div>
                     <div style="margin-bottom: 1rem;">
-                        <textarea placeholder="Votre message" class="form-control" rows="4" required style="width:100%;"></textarea>
+                        <textarea id="contact-message" placeholder="Votre message" class="form-control" rows="4" required style="width:100%;"></textarea>
                     </div>
-                    <button type="button" class="btn btn-primary" onclick="alert('Message envoyé avec succès !')">Envoyer le message</button>
+                    <div id="contact-feedback" style="display:none; padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 0.9rem;"></div>
+                    <button type="submit" class="btn btn-primary" id="contact-submit-btn">Envoyer le message</button>
                 </form>
             </div>
         </section>
@@ -225,6 +227,42 @@
             </div>
         </footer>
     </div>
+    <script src="js/api.js"></script>
+    <script>
+        document.getElementById('contact-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const feedback = document.getElementById('contact-feedback');
+            const btn = document.getElementById('contact-submit-btn');
+            const nom = document.getElementById('contact-nom').value.trim();
+            const email = document.getElementById('contact-email').value.trim();
+            const message = document.getElementById('contact-message').value.trim();
+
+            btn.disabled = true;
+            btn.textContent = 'Envoi en cours...';
+            feedback.style.display = 'none';
+
+            try {
+                const res = await ApiClient.request('/contact', 'POST', { nom, email, message });
+
+                feedback.style.display = 'block';
+                feedback.style.background = 'rgba(16, 185, 129, 0.12)';
+                feedback.style.color = 'var(--success-color)';
+                feedback.innerHTML = res.message || 'Message envoyé avec succès !';
+
+                document.getElementById('contact-nom').value = '';
+                document.getElementById('contact-email').value = '';
+                document.getElementById('contact-message').value = '';
+            } catch (err) {
+                feedback.style.display = 'block';
+                feedback.style.background = 'rgba(239, 68, 68, 0.12)';
+                feedback.style.color = 'var(--danger-color)';
+                feedback.innerHTML = err.message || 'Erreur lors de l\'envoi du message.';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Envoyer le message';
+            }
+        });
+    </script>
     <script src="js/theme.js"></script>
 </body>
 </html>

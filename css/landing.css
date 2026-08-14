@@ -134,12 +134,15 @@ body {
 
 .btn-secondary {
     background-color: var(--secondary-color);
-    color: var(--primary-color);
+    color: var(--on-primary);
     font-weight: 600;
 }
 
 .btn-secondary:hover {
-    background-color: #aab7e1;
+    background-color: var(--primary-dark);
+    color: var(--on-primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
 }
 
 /* Right Image */
@@ -611,6 +614,16 @@ body {
 
 
 /* ===== Thème sombre - landing.css ===== */
+/* En thème sombre, --primary-dark (#2a8f7e) est trop foncé pour le texte sombre
+   des boutons : on éclaircit le fond au survol pour garder le texte lisible. */
+[data-theme="dark"] .btn-primary:hover {
+    background-color: var(--primary-light);
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+    background-color: var(--primary-light);
+}
+
 [data-theme="dark"] .hero-stat-card {
     background: rgba(33, 46, 52, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.1);

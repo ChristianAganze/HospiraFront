@@ -6,6 +6,7 @@
     <title>Médecin - Hospira</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body class="dashboard-layout">
 
@@ -80,7 +81,7 @@
 
             <!-- Vue Consultation -->
             <div id="view-consultation" style="display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <div>
                         <h2 style="margin: 0; color: var(--text-main);" id="consultation-patient-name">Dossier Patient</h2>
                         <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;" id="consultation-patient-info">Sélectionnez un patient pour commencer la consultation</p>
@@ -109,7 +110,7 @@
                                 <input type="hidden" id="cons-patient-id">
                                 <input type="hidden" id="cons-rendezvous-id">
 
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                     <div class="form-group">
                                         <label>Poids (kg)</label>
                                         <input type="number" step="0.1" class="form-control" id="cons-poids">
@@ -146,7 +147,7 @@
                                         <!-- Liste des médicaments ajoutés -->
                                     </div>
 
-                                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.5rem; align-items: end;">
+                                    <div class="grid-presc" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.5rem; align-items: end;">
                                         <div class="form-group" style="margin: 0;">
                                             <label style="font-size: 0.8rem;">Médicament</label>
                                             <input type="text" class="form-control" id="presc-medicament" placeholder="Nom du médicament">
@@ -172,7 +173,7 @@
                                     <textarea class="form-control" id="cons-notes" rows="2"></textarea>
                                 </div>
 
-                                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                                <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
                                     <button type="button" class="btn btn-secondary" onclick="document.getElementById('form-nouvelle-consultation').reset()">Effacer</button>
                                     <button type="submit" class="btn btn-primary">Terminer la consultation</button>
                                 </div>

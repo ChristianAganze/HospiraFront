@@ -21,7 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Initialisation de l'interface (Topbar)
     document.getElementById('user-name-top').textContent = `Dr. ${user.prenom} ${user.nom}`;
-    document.getElementById('user-role-top').textContent = user.role;
+    const topbarRole = user.is_assistant ? 'Assistant · ' : '';
+    const topbarSpecialite = user.specialite ? ` · ${user.specialite}` : '';
+    document.getElementById('user-role-top').textContent = topbarRole + user.role + topbarSpecialite;
     
     const topUserInitials = document.getElementById('topbar-user-initials');
     topUserInitials.textContent = user.prenom.charAt(0).toUpperCase() + user.nom.charAt(0).toUpperCase();
@@ -94,11 +96,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const container = document.getElementById('medecin-file-attente');
                 container.innerHTML = '';
                 
-                // On affiche les patients qui ont payé et qui attendent (Confirmé)
-                const attente = rdvs.filter(r => r.statut === 'Confirmé');
+                // Chaque médecin (ou son assistant) ne voit que les patients
+                // qui lui ont été affectés par la secrétaire (Confirmé).
+                const monId = Number(user.id);
+                const monSuperviseur = user.is_assistant ? Number(user.superviseur_id) : null;
+
+                const attente = rdvs.filter(r => {
+                    if (r.statut !== 'Confirmé') return false;
+                    const medecinId = r.medecin && r.medecin.id ? Number(r.medecin.id) : null;
+                    if (!medecinId) return false;
+                    return medecinId === monId || (monSuperviseur && medecinId === monSuperviseur);
+                });
                 
                 if (attente.length === 0) {
-                    container.innerHTML = '<p class="text-muted text-center mt-2" style="padding: 2rem;">Aucun patient en salle d\'attente pour le moment.</p>';
+                    container.innerHTML = '<p class="text-muted text-center mt-2" style="padding: 2rem;">Aucun patient qui vous est affecté en salle d\'attente pour le moment.</p>';
                     return;
                 }
 
@@ -108,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const patientNom = rdv.patient ? rdv.patient.nom : (rdv.patient_nom || '');
                     const patientId = rdv.patient_id;
                     const ticket = rdv.numero_passage || 'N/A';
+                    const specialite = rdv.medecin && rdv.medecin.specialite ? rdv.medecin.specialite : '';
                     const card = document.createElement('div');
                     card.style.padding = '1rem';
                     card.style.border = '1px solid rgba(0,0,0,0.05)';
@@ -122,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div>
                             <h4 style="margin: 0 0 0.5rem 0; color: var(--primary-dark);">🎫 #${ticket} — ${patientPrenom} ${patientNom}</h4>
                             <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">
-                                Motif: ${rdv.motif || 'Général'}
+                                Motif: ${rdv.motif || 'Général'}${specialite ? ` <span class="badge" style="background:var(--primary-color); color:white; margin-left:0.4rem;">${specialite}</span>` : ''}
                             </p>
                         </div>
                         <button class="btn btn-primary btn-sm" onclick="demarrerConsultation(${rdv.id}, ${patientId}, '${patientPrenom} ${patientNom}')">Consulter</button>
