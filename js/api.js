@@ -1,21 +1,20 @@
 /**
  * api.js - Fichier central pour les appels fetch() vers le backend
+ *
+ * Résolution de l'URL du backend :
+ *   1. Vite injecte window.API_BASE_URL depuis les fichiers .env
+ *      (.env.development pour `vite dev`, .env.production pour `vite build`)
+ *   2. Fallback : auto-détection via window.location (fonctionne sous Apache
+ *      ou en file://). Aucun host n'est codé en dur.
  */
 
-// API_BASE_URL :
-//  1) window.API_BASE_URL si défini (déploiement personnalisé)
-//  2) sinon, le backend est servi par Apache (port 80) sur le même hôte
-//     que le frontend : //<hôte>/Hospira/HospiraBackend/public/api
-//     Fonctionne donc que le frontend soit servi par Vite (localhost:5173),
-//     par Apache sous /Hospira/..., ou via une adresse IP du LAN.
 const API_BASE_URL = window.API_BASE_URL || (() => {
-    const host = window.location.hostname || 'localhost';
-    // Si la page est ouverte en file:// (double-clic), une URL relative au
-    // protocole ("//host/...") serait résolue en "file://host/..." et échouerait.
-    // On force donc http: dans ce cas.
+    const host = window.location.hostname || '127.0.0.1';
     const proto = (window.location.protocol === 'file:' || window.location.protocol === '') ? 'http:' : window.location.protocol;
     return proto + '//' + host + '/Hospira/HospiraBackend/public/api';
 })();
+
+console.log('[Hospira] API Base URL:', API_BASE_URL);
 
 class ApiClient {
     static async request(endpoint, method = 'GET', data = null) {
@@ -50,6 +49,7 @@ class ApiClient {
         }
 
         try {
+            console.log(`[Hospira] ${method} ${url}`);
             const response = await fetch(url, config);
 
             let responseData = {};
@@ -57,8 +57,8 @@ class ApiClient {
                 responseData = await response.json();
             } catch (parseError) {
                 // Réponse vide ou non-JSON (ex: backend planté, page HTML renvoyée)
-                console.error('Réponse non-JSON:', parseError);
-                throw new Error('Le serveur a répondu de façon inattendue. Vérifiez que Apache et MySQL sont bien démarrés.');
+                console.error('[Hospira] Réponse non-JSON:', parseError, 'Status:', response.status);
+                throw new Error('Le serveur a répondu de façon inattendue (HTTP ' + response.status + '). Vérifiez que Apache et MySQL sont bien démarrés.');
             }
 
             if (!response.ok) {
@@ -76,12 +76,11 @@ class ApiClient {
 
             return responseData;
         } catch (error) {
+            console.error('[Hospira] Erreur API:', error.message, 'URL:', url);
             // Erreur réseau / serveur inaccessible : message compréhensible
-            if (error instanceof TypeError || /failed to fetch/i.test(error.message)) {
-                console.error('API Error:', error);
-                throw new Error('Impossible de contacter le serveur. Vérifiez que Apache et MySQL sont démarrés, puis réessayez.');
+            if (error instanceof TypeError || /failed to fetch|NetworkError|Load failed/i.test(error.message)) {
+                throw new Error('Impossible de contacter le serveur à ' + url + '. Vérifiez que Apache et MySQL sont démarrés, puis réessayez.');
             }
-            console.error('API Error:', error);
             throw error;
         }
     }

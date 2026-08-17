@@ -23,6 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('user-name-top').textContent = `${user.prenom} ${user.nom}`;
     document.getElementById('user-role-top').textContent = user.role;
 
+    // Mobile Menu Toggle
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', () => {
+            document.querySelector('.nav-menu').classList.toggle('show');
+        });
+    }
+
     // Load Queue
     loadLaboQueue();
 

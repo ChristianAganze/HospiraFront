@@ -1,0 +1,8 @@
+# Variables d'environnement locales (jamais commitées)
+.env
+.env.local
+.env.*.local
+
+# Build
+node_modules/
+dist/
