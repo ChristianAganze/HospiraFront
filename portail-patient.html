@@ -41,9 +41,6 @@
     <aside class="sidebar">
         <div class="sidebar-header">
             <h2>Hospi<span style="color:var(--secondary-color)">ra</span></h2>
-            <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Menu" style="display: none; background: none; border: none; color: var(--primary-color); cursor: pointer;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            </button>
         </div>
         
         <ul class="nav-menu">
@@ -74,10 +71,16 @@
         </ul>
     </aside>
 
+    <!-- Sidebar Backdrop -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
     <!-- Main Content Area -->
     <main class="main-content">
         <!-- Topbar -->
         <header class="topbar">
+            <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Menu" style="display: none; background: none; border: none; color: var(--primary-color); cursor: pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
             <h1 id="page-title">Mon Espace Santé</h1>
             
             <div class="topbar-user" style="position: relative; cursor: pointer;" id="topbar-user-menu">
@@ -344,16 +347,26 @@
                 pageTitle.textContent = titleText;
 
                 if (window.innerWidth <= 768) {
-                    document.querySelector('.nav-menu').classList.remove('show');
+                    closeSidebar();
                 }
             }
 
-            // Mobile Menu Toggle
+            // Mobile Sidebar Toggle
             const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const sidebar = document.querySelector('.sidebar');
+            const backdropEl = document.getElementById('sidebar-backdrop');
+            function closeSidebar() {
+                if (sidebar) sidebar.classList.remove('open');
+                if (backdropEl) backdropEl.classList.remove('active');
+            }
             if (mobileMenuBtn) {
                 mobileMenuBtn.addEventListener('click', () => {
-                    document.querySelector('.nav-menu').classList.toggle('show');
+                    sidebar.classList.toggle('open');
+                    backdropEl.classList.toggle('active');
                 });
+            }
+            if (backdropEl) {
+                backdropEl.addEventListener('click', closeSidebar);
             }
 
             navDashboard.addEventListener('click', (e) => { e.preventDefault(); switchPatientView(navDashboard, viewDashboard, 'Mon Espace Santé'); });

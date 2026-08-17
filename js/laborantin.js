@@ -23,12 +23,22 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('user-name-top').textContent = `${user.prenom} ${user.nom}`;
     document.getElementById('user-role-top').textContent = user.role;
 
-    // Mobile Menu Toggle
+    // Mobile Sidebar Toggle
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const sidebar = document.querySelector('.sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    function closeSidebar() {
+        if (sidebar) sidebar.classList.remove('open');
+        if (backdrop) backdrop.classList.remove('active');
+    }
     if (mobileMenuBtn) {
         mobileMenuBtn.addEventListener('click', () => {
-            document.querySelector('.nav-menu').classList.toggle('show');
+            sidebar.classList.toggle('open');
+            backdrop.classList.toggle('active');
         });
+    }
+    if (backdrop) {
+        backdrop.addEventListener('click', closeSidebar);
     }
 
     // Load Queue

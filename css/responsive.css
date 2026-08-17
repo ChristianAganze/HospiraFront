@@ -21,6 +21,7 @@ img {
     body.dashboard-layout {
         height: auto;
         min-height: 100vh;
+        min-height: 100dvh;
         overflow-y: auto;
     }
 
@@ -29,30 +30,28 @@ img {
         height: auto;
     }
 
-    /* Menu mobile : menu dans le flux (plus de chevauchement du contenu) */
-    .nav-menu {
-        position: static;
-        top: auto;
-        box-shadow: none;
+    /* Sidebar : override pour garder le drawer propre */
+    .sidebar {
+        background-color: var(--primary-color);
     }
 
     .nav-link {
-        color: var(--text-main);
+        color: rgba(255,255,255,0.8);
     }
 
     .nav-link svg {
-        color: var(--primary-color);
+        color: rgba(255,255,255,0.7);
     }
 
     .nav-link:hover,
     .nav-link.active {
-        color: var(--primary-color);
-        background-color: var(--bg-input);
-        border-left-color: var(--primary-color);
+        color: white;
+        background-color: rgba(255,255,255,0.1);
+        border-left-color: white;
     }
 
     .mobile-menu-btn {
-        color: #fff !important;
+        color: var(--primary-color) !important;
     }
 
     /* Cartes */
@@ -100,11 +99,6 @@ img {
     /* Actions de formulaire */
     .form-actions {
         flex-wrap: wrap;
-    }
-
-    /* Barre supérieure */
-    .topbar-user {
-        width: 100%;
     }
 }
 

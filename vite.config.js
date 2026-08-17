@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
     const apiUrl = env.VITE_API_BASE_URL || 'http://localhost/Hospira/HospiraBackend/public/api';
 
     return {
-        publicDir: 'assets',
+        publicDir: 'public',
         build: {
             rollupOptions: {
                 input: {

@@ -51,12 +51,22 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('modal-profile').style.display = 'none';
     });
 
-    // Mobile Menu Toggle
+    // Mobile Sidebar Toggle
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const sidebar = document.querySelector('.sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    function closeSidebar() {
+        if (sidebar) sidebar.classList.remove('open');
+        if (backdrop) backdrop.classList.remove('active');
+    }
     if (mobileMenuBtn) {
         mobileMenuBtn.addEventListener('click', () => {
-            document.querySelector('.nav-menu').classList.toggle('show');
+            sidebar.classList.toggle('open');
+            backdrop.classList.toggle('active');
         });
+    }
+    if (backdrop) {
+        backdrop.addEventListener('click', closeSidebar);
     }
 
     // 3. Navigation Sidebar
@@ -72,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activeNav.classList.add('active');
         activeView.style.display = 'block';
         if(window.innerWidth <= 768) {
-             document.querySelector('.nav-menu').classList.remove('show');
+             closeSidebar();
         }
     }
 
