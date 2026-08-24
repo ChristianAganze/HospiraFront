@@ -146,18 +146,56 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     };
 
-    // Impression
+    // Impression robuste (compatible iframe et mobile)
     const modalRecu = document.getElementById('modal-recu');
     document.getElementById('close-modal-recu').addEventListener('click', () => modalRecu.style.display = 'none');
     
     document.getElementById('btn-print-recu').addEventListener('click', () => {
-        const ticket = document.getElementById('ticket-caisse').innerHTML;
-        const a = window.open('', '', 'height=500, width=500');
-        a.document.write('<html><body style="font-family: monospace;">');
-        a.document.write(ticket);
-        a.document.write('</body></html>');
-        a.document.close();
-        a.print();
+        const ticket = document.getElementById('ticket-caisse');
+        if (!ticket) return;
+
+        // Création d'un iframe caché pour l'impression sécurisée
+        let printFrame = document.getElementById('hidden-print-frame');
+        if (!printFrame) {
+            printFrame = document.createElement('iframe');
+            printFrame.id = 'hidden-print-frame';
+            printFrame.style.position = 'fixed';
+            printFrame.style.right = '0';
+            printFrame.style.bottom = '0';
+            printFrame.style.width = '0';
+            printFrame.style.height = '0';
+            printFrame.style.border = '0';
+            document.body.appendChild(printFrame);
+        }
+
+        const doc = printFrame.contentWindow.document;
+        doc.open();
+        doc.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Reçu de Caisse - Hospira</title>
+                <style>
+                    body { font-family: 'Courier New', Courier, monospace; padding: 20px; color: #000; font-size: 13px; }
+                    .header { text-align: center; margin-bottom: 15px; }
+                    .header h2 { margin: 0; font-size: 16px; text-transform: uppercase; }
+                    .divider { border-bottom: 1px dashed #000; margin: 10px 0; }
+                    .row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+                    .total { font-weight: bold; font-size: 15px; margin-top: 10px; }
+                    .footer { text-align: center; margin-top: 20px; font-size: 11px; }
+                </style>
+            </head>
+            <body>
+                ${ticket.innerHTML}
+            </body>
+            </html>
+        `);
+        doc.close();
+
+        setTimeout(() => {
+            printFrame.contentWindow.focus();
+            printFrame.contentWindow.print();
+        }, 250);
     });
 
     // 4. Charger les examens prescrits à encaisser

@@ -200,12 +200,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function getRoleBadgeClass(role) {
-        switch(role) {
-            case 'Admin': return 'bg-danger';
-            case 'Medecin': return 'bg-primary';
-            case 'Secretaire': return 'bg-info';
-            case 'Caissier': return 'bg-success';
-            default: return 'bg-secondary';
+        const r = (role || '').toLowerCase();
+        switch(r) {
+            case 'admin':
+            case 'administrateur': return 'badge-danger';
+            case 'medecin':
+            case 'médecin': return 'badge-info';
+            case 'secretaire':
+            case 'secrétaire': return 'badge-warning';
+            case 'caissier': return 'badge-success';
+            case 'laborantin': return 'badge-info';
+            default: return 'badge-info';
         }
     }
 

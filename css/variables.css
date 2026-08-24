@@ -1,84 +1,105 @@
 /* ============================================================
-   Thème Hospira
+   Thème Hospira - Design System Médical & Précision Clinique
    Palette claire (par défaut) + palette sombre via [data-theme="dark"]
    ============================================================ */
 
 :root {
-    /* Palette fournie (clair) */
-    --bg-primary: #ffffff;
-    --bg-secondary: #f4f6f7;
-    --primary-brand: #0d4848;
-    --text-main: #1f2937;
-    --text-muted: #6b7280;
+    /* Identité Médicale Hospira (Clair) */
+    --primary-brand: #0d4848;       /* Sarcelle chirurgicale profonde (Teal) */
+    --primary-color: #0d4848;       /* Marque principale */
+    --primary-light: #165b5b;       /* Accent / Survol */
+    --primary-dark: #082e2e;        /* Teinte foncée / Fond sidebar */
+    --secondary-color: #1e6b68;     /* Accent secondaire */
+    --accent-color: #008b8b;        /* Action vive */
     --accent-icon: #1e6b68;
 
-    /* Mappage vers les variables utilisées par les feuilles de style */
-    --primary-color: #0d4848;   /* Brand (boutons, sidebar, liens) */
-    --primary-light: #1e6b68;   /* Accents / barres */
-    --primary-dark: #082e2e;    /* Survol / fonds foncés */
-    --secondary-color: #1e6b68; /* Accent texte/liens/bordures */
-    --accent-color: #1e6b68;    /* Accent actions */
+    /* Surfaces & Fonds */
+    --bg-main: #f8fafc;             /* Fond clinique propre (Slate 50) */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f1f5f9;        /* Slate 100 */
+    --bg-card: #ffffff;
+    --bg-input: #f8fafc;
+    --bg-sidebar: #0a3838;          /* Sidebar contrastée */
+    --surface-hover: #f1f5f9;
+    --border-color: #e2e8f0;        /* Slate 200 */
+    --border-subtle: #f1f5f9;
 
-    /* Texte sur fond de marque (contraste lisible) */
+    /* Typographie */
+    --text-main: #0f172a;           /* Slate 900 */
+    --text-muted: #64748b;          /* Slate 500 */
+    --text-light: #ffffff;
     --on-primary: #ffffff;
 
-    /* Fond */
-    --bg-main: #ffffff;
-    --bg-card: #ffffff;
-    --bg-input: #f4f6f7;
+    /* Statuts Cliniques Normalisés (WCAG Compliant) */
+    --success-color: #059669;       /* Émeraude clinique 600 */
+    --success-bg: rgba(5, 150, 105, 0.12);
+    --warning-color: #d97706;       /* Ambre 600 */
+    --warning-bg: rgba(217, 119, 6, 0.12);
+    --danger-color: #dc2626;        /* Rouge alerte 600 */
+    --danger-bg: rgba(220, 38, 38, 0.12);
+    --info-color: #0284c7;          /* Bleu ciel médical 600 */
+    --info-bg: rgba(2, 132, 199, 0.12);
 
-    /* Texte */
-    --text-light: #ffffff;
+    /* Ombres Précises */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
+    --shadow-glass: 0 8px 32px 0 rgba(13, 72, 72, 0.15);
 
-    /* Status Colors */
-    --success-color: #2ecc71;
-    --warning-color: #f1c40f;
-    --danger-color: #e74c3c;
-    --info-color: #3498db;
-
-    /* Shadows (Soft & Premium) */
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-    --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-
-    /* Radii */
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 16px;
-    --radius-pill: 50px;
+    /* Arrondis Mathématiques */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+    --radius-pill: 9999px;
 
     /* Transitions */
-    --transition-fast: 0.2s ease;
-    --transition-normal: 0.3s ease;
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
 }
 
-/* Thème Sombre */
+/* Thème Sombre Médical Haute Lisibilité */
 [data-theme="dark"] {
-    /* Palette fournie (sombre) */
-    --bg-primary: #12181b;
-    --bg-secondary: #212e34;
-    --primary-brand: #4cd6b4;
-    --text-main: #f3f4f6;
-    --text-muted: #9ca3af;
-    --accent-icon: #2dd4bf;
+    --bg-main: #0c1317;             /* Fond profond doux pour les yeux */
+    --bg-primary: #121c22;
+    --bg-secondary: #1a2730;
+    --bg-card: #142229;
+    --bg-input: #1b2a33;
+    --bg-sidebar: #0a161b;
+    --surface-hover: #1f323c;
+    --border-color: #263844;
+    --border-subtle: #1e2e38;
 
-    --primary-color: #4cd6b4;
-    --primary-light: #2dd4bf;
-    --primary-dark: #2a8f7e;
-    --secondary-color: #2dd4bf;
+    /* Couleurs de Marque adaptées au mode sombre */
+    --primary-brand: #38bdf8;
+    --primary-color: #38bdf8;       /* Cyan haute visibilité */
+    --primary-light: #7dd3fc;
+    --primary-dark: #0284c7;
+    --secondary-color: #2dd4bf;     /* Teal clair */
     --accent-color: #2dd4bf;
+    --accent-icon: #38bdf8;
 
+    /* Typographie */
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-light: #ffffff;
     --on-primary: #082b29;
 
-    --bg-main: #12181b;
-    --bg-card: #212e34;
-    --bg-input: #212e34;
+    /* Statuts Cliniques en mode sombre */
+    --success-color: #34d399;
+    --success-bg: rgba(52, 211, 153, 0.15);
+    --warning-color: #fbbf24;
+    --warning-bg: rgba(251, 191, 36, 0.15);
+    --danger-color: #f87171;
+    --danger-bg: rgba(248, 113, 113, 0.15);
+    --info-color: #60a5fa;
+    --info-bg: rgba(96, 165, 250, 0.15);
 
-    --text-light: #ffffff;
-
+    /* Ombres mode sombre */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
-    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.55);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
 }

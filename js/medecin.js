@@ -312,21 +312,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Init
     loadAttente();
 
-    // Notifications et rafraîchissement
-    window.showToast = function(message, type = "success") {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()" style="background:none; border:none; color:white; cursor:pointer;">&times;</button>`;
-        container.appendChild(toast);
-        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 5000);
-        setTimeout(() => { toast.style.opacity = '1'; }, 10);
-    }
-
     // Auto-refresh salle d'attente
     setInterval(() => {
-        if(navDashboard.classList.contains('active')) {
+        if(navDashboard && navDashboard.classList.contains('active')) {
             loadAttente();
         }
     }, 30000);

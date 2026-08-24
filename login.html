@@ -19,7 +19,15 @@
 </head>
 <body>
 
-    <div class="login-container">
+    <div style="position: absolute; top: 1.5rem; left: 1.5rem; right: 1.5rem; display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+        <a href="index.html" class="btn btn-secondary" style="font-size: 0.88rem; padding: 0.45rem 0.9rem; text-decoration: none; border-radius: 8px;">
+            ← Retour à l'accueil
+        </a>
+        <button id="theme-toggle" class="btn btn-secondary theme-toggle-btn" aria-label="Changer le thème" title="Changer le thème" style="padding: 0.5rem 0.65rem; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;">
+        </button>
+    </div>
+
+    <div class="login-container" style="margin-top: 2rem;">
         <div class="glass-card">
             <div class="logo-area">
                 <h1>Hospi<span>ra</span></h1>
@@ -56,21 +64,25 @@
                 </button>
             </form>
             
-            <p class="text-center mt-3" style="font-size: 0.85rem; color: var(--text-muted);">
-                Êtes-vous un patient ? <a href="#" id="show-register-modal" style="color: var(--primary-color);">Créer un compte</a><br><br>
-                &copy; 2026 Hospira.
+            <p class="text-center mt-3" style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6;">
+                Êtes-vous un patient ? <a href="#" id="show-register-modal" style="color: var(--primary-color); font-weight: 600;">Créer un compte</a><br>
+                <span style="font-size: 0.8rem; color: var(--text-light);">&copy; 2026 Hospira. Tous droits réservés.</span>
             </p>
         </div>
     </div>
 
     <!-- Modal d'inscription Patient -->
-    <div id="register-modal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; padding: 1rem; box-sizing: border-box;">
-        <div class="glass-card" style="width: 100%; max-width: 500px; padding: 2rem; position: relative; max-height: 90vh; overflow-y: auto;">
-            <button id="close-register-modal" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
-            <h2 style="margin-bottom: 1.5rem; color: var(--primary-color);">Nouveau Patient</h2>
+    <div id="register-modal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); align-items: center; justify-content: center; z-index: 1000; padding: 1rem; box-sizing: border-box;">
+        <div class="glass-card" style="width: 100%; max-width: 520px; padding: 2.25rem 2rem; position: relative; max-height: 90vh; overflow-y: auto;">
+            <button id="close-register-modal" style="position: absolute; top: 1.25rem; right: 1.25rem; background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; line-height: 1; transition: color 0.2s;" aria-label="Fermer">&times;</button>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin: 0 0 0.35rem 0;">Créer un compte Patient</h2>
+                <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">Remplissez les informations pour accéder à votre espace santé sécurisé.</p>
+            </div>
             
             <div id="register-error" class="error-message" style="display: none;"></div>
-            <div id="register-success" class="error-message" style="display: none; background-color: rgba(0, 184, 148, 0.1); color: #00b894; border-color: #00b894;"></div>
+            <div id="register-success" class="error-message" style="display: none; background-color: var(--success-bg); color: var(--success-color); border: 1px solid var(--success-color);"></div>
 
             <form id="register-form" enctype="multipart/form-data" autocomplete="off">
                 
@@ -114,14 +126,24 @@
                     <input type="email" id="reg-email" class="form-control" required>
                 </div>
                 
-                <div class="form-group" style="margin-bottom: 1.5rem;">
+                <div class="form-group" style="margin-bottom: 1.25rem;">
                     <label class="form-label">Mot de passe *</label>
-                    <input type="password" id="reg-password" class="form-control" required minlength="6">
+                    <div class="password-wrapper">
+                        <input type="password" id="reg-password" class="form-control" placeholder="Au moins 6 caractères" required minlength="6" autocomplete="new-password">
+                        <button type="button" class="toggle-password-btn" aria-label="Afficher le mot de passe" title="Afficher le mot de passe">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1.5rem;">
                     <label class="form-label">Confirmer le mot de passe *</label>
-                    <input type="password" id="reg-password-confirm" class="form-control" required minlength="6" autocomplete="off">
+                    <div class="password-wrapper">
+                        <input type="password" id="reg-password-confirm" class="form-control" placeholder="Retapez votre mot de passe" required minlength="6" autocomplete="new-password">
+                        <button type="button" class="toggle-password-btn" aria-label="Afficher le mot de passe" title="Afficher le mot de passe">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" id="btn-register" class="btn btn-primary btn-block">

@@ -22,6 +22,48 @@ document.addEventListener('DOMContentLoaded', () => {
     // Topbar User Info
     document.getElementById('user-name-top').textContent = `${user.prenom} ${user.nom}`;
     document.getElementById('user-role-top').textContent = user.role;
+    
+    const topUserInitials = document.getElementById('topbar-user-initials');
+    if (topUserInitials) {
+        topUserInitials.textContent = user.prenom.charAt(0).toUpperCase() + user.nom.charAt(0).toUpperCase();
+    }
+
+    // Topbar Dropdown
+    const userMenu = document.getElementById('topbar-user-menu');
+    const userDropdown = document.getElementById('user-dropdown');
+    if (userMenu && userDropdown) {
+        userMenu.addEventListener('click', (e) => {
+            userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+            e.stopPropagation();
+        });
+        window.addEventListener('click', () => {
+            userDropdown.style.display = 'none';
+        });
+    }
+
+    const btnLogout = document.getElementById('btn-logout');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', () => {
+            localStorage.removeItem('hospira_token');
+            localStorage.removeItem('hospira_user');
+            window.location.href = 'login.html';
+        });
+    }
+
+    const btnProfil = document.getElementById('btn-profil');
+    const modalProfile = document.getElementById('modal-profile');
+    const closeModalProfile = document.getElementById('close-modal-profile');
+    if (btnProfil && modalProfile) {
+        btnProfil.addEventListener('click', (e) => {
+            e.preventDefault();
+            modalProfile.style.display = 'flex';
+        });
+    }
+    if (closeModalProfile && modalProfile) {
+        closeModalProfile.addEventListener('click', () => {
+            modalProfile.style.display = 'none';
+        });
+    }
 
     // Mobile Sidebar Toggle
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
@@ -74,16 +116,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const response = await ApiClient.request('/api/resultats-examens', 'POST', formData, true);
-                if (typeof showToast === 'function') {
-                    showToast("Résultat d'examen enregistré et publié !");
-                } else {
-                    alert("Résultat d'examen enregistré et publié !");
-                }
+                showToast("Résultat d'examen enregistré et publié avec succès !", "success");
                 modalResultat.style.display = 'none';
                 formResultat.reset();
                 loadLaboQueue();
             } catch (err) {
-                alert("Erreur lors de l'enregistrement du résultat : " + err.message);
+                showToast("Erreur lors de l'enregistrement : " + err.message, "danger");
             }
         });
     }

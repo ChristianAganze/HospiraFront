@@ -7,10 +7,27 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/login.css">
     <link rel="stylesheet" href="css/responsive.css">
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('hospira-theme') === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
 </head>
 <body>
 
-    <div class="login-container">
+    <div style="position: absolute; top: 1.5rem; left: 1.5rem; right: 1.5rem; display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+        <a href="login.html" class="btn btn-secondary" style="font-size: 0.88rem; padding: 0.45rem 0.9rem; text-decoration: none; border-radius: 8px;">
+            ← Retour à la connexion
+        </a>
+        <button id="theme-toggle" class="btn btn-secondary theme-toggle-btn" aria-label="Changer le thème" title="Changer le thème" style="padding: 0.5rem 0.65rem; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;">
+        </button>
+    </div>
+
+    <div class="login-container" style="margin-top: 2rem;">
         <div class="glass-card">
             <div class="logo-area">
                 <h1>Hospi<span>ra</span></h1>
@@ -25,24 +42,39 @@
                 Une erreur est survenue.
             </div>
 
-            <div id="success-alert" class="error-message" style="background-color: rgba(0, 184, 148, 0.1); color: #00b894; border-color: #00b894;">
+            <div id="success-alert" class="error-message" style="background-color: var(--success-bg); color: var(--success-color); border: 1px solid var(--success-color);">
                 Mot de passe modifié avec succès.
             </div>
 
             <form id="change-password-form" autocomplete="off">
                 <div class="form-group">
                     <label for="old-password" class="form-label">Ancien mot de passe</label>
-                    <input type="password" id="old-password" class="form-control" placeholder="••••••••" required autocomplete="off">
+                    <div class="password-wrapper">
+                        <input type="password" id="old-password" class="form-control" placeholder="••••••••" required autocomplete="off">
+                        <button type="button" class="toggle-password-btn" aria-label="Afficher le mot de passe" title="Afficher le mot de passe">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="new-password" class="form-label">Nouveau mot de passe</label>
-                    <input type="password" id="new-password" class="form-control" placeholder="Au moins 6 caractères" required minlength="6" autocomplete="off">
+                    <div class="password-wrapper">
+                        <input type="password" id="new-password" class="form-control" placeholder="Au moins 6 caractères" required minlength="6" autocomplete="off">
+                        <button type="button" class="toggle-password-btn" aria-label="Afficher le mot de passe" title="Afficher le mot de passe">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-group mb-3">
                     <label for="new-password-confirm" class="form-label">Confirmer le nouveau mot de passe</label>
-                    <input type="password" id="new-password-confirm" class="form-control" placeholder="••••••••" required minlength="6" autocomplete="off">
+                    <div class="password-wrapper">
+                        <input type="password" id="new-password-confirm" class="form-control" placeholder="Retapez le nouveau mot de passe" required minlength="6" autocomplete="off">
+                        <button type="button" class="toggle-password-btn" aria-label="Afficher le mot de passe" title="Afficher le mot de passe">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" id="change-password-btn" class="btn btn-primary btn-block">
@@ -110,5 +142,6 @@
             });
         });
     </script>
+    <script src="js/theme.js"></script>
 </body>
 </html>

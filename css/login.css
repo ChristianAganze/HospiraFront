@@ -1,106 +1,225 @@
-        body {
-        
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-main) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-        }
+/* ============================================================
+   login.css - Styles épurés & modernes pour Connexion / Inscription
+   ============================================================ */
 
-        .login-container {
-            width: 100%;
-            max-width: 420px;
-            padding: 2rem;
-            position: relative;
-        }
+body {
+    background-color: var(--bg-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 1.5rem 1rem;
+    overflow-y: auto;
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: var(--radius-lg);
-            padding: 2.5rem 2rem;
-            box-shadow: var(--shadow-glass);
-        }
+.login-container {
+    width: 100%;
+    max-width: 440px;
+    margin: auto;
+    position: relative;
+    z-index: 1;
+}
 
-        .logo-area {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
+/* Card principale */
+.glass-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2.5rem 2.25rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+    transition: box-shadow var(--transition-normal);
+}
 
-        .logo-area h1 {
-            color: var(--primary-color);
-            font-size: 2rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            margin-bottom: 0.5rem;
-        }
+.logo-area {
+    text-align: center;
+    margin-bottom: 2rem;
+}
 
-        .logo-area h1 span {
-            color: var(--secondary-color);
-        }
+.logo-area h1 {
+    color: var(--primary-color);
+    font-size: 2.1rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.35rem;
+}
 
-        .logo-area p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
+.logo-area h1 span {
+    color: var(--secondary-color);
+}
 
-        .error-message {
-            color: var(--danger-color);
-            background-color: rgba(231, 76, 60, 0.1);
-            padding: 0.75rem;
-            border-radius: var(--radius-sm);
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-            display: none; /* Hidden by default */
-            text-align: center;
-        }
+.logo-area p {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    font-weight: 500;
+}
 
-        .loading-spinner {
-            display: none;
-            width: 1.5rem;
-            height: 1.5rem;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-            margin-left: 10px;
-        }
+/* Messages d'erreur et de succès */
+.error-message {
+    color: var(--danger-color);
+    background-color: rgba(220, 38, 38, 0.08);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: none;
+    text-align: center;
+    line-height: 1.4;
+}
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+/* Formulaires */
+.form-group {
+    margin-bottom: 1.25rem;
+}
 
-        .btn-loading .loading-spinner {
-            display: inline-block;
-        }
+.form-label {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.45rem;
+}
 
-        /* Responsive Design */
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 1rem;
-            }
+.form-hint {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--text-muted);
+}
 
-            .glass-card {
-                padding: 2rem 1.5rem;
-            }
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--border-color);
+    background-color: #ffffff;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
 
-            .logo-area h1 {
-                font-size: 1.75rem;
-            }
-        }
+.form-control::placeholder {
+    color: var(--text-light);
+    opacity: 0.8;
+}
 
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.14);
+    outline: none;
+    background-color: #ffffff;
+}
 
-/* ===== Th�me sombre - login.css ===== */
+/* Password wrapper */
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper .form-control {
+    padding-right: 2.75rem;
+}
+
+.toggle-password-btn {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem;
+    border-radius: var(--radius-sm);
+    transition: color var(--transition-fast);
+}
+
+.toggle-password-btn:hover {
+    color: var(--primary-color);
+}
+
+/* Boutons */
+.btn-block {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.85rem 1.5rem;
+    font-size: 0.98rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    margin-top: 1rem;
+    cursor: pointer;
+}
+
+.loading-spinner {
+    display: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2.5px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #ffffff;
+    animation: spin 0.8s linear infinite;
+    margin-left: 10px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.btn-loading .loading-spinner {
+    display: inline-block;
+}
+
+/* Modal d'inscription */
+.modal {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .login-container {
+        padding: 0.5rem;
+    }
+
+    .glass-card {
+        padding: 2rem 1.25rem;
+        border-radius: 14px;
+    }
+
+    .logo-area h1 {
+        font-size: 1.8rem;
+    }
+}
+
+/* ===== Thème sombre - login.css ===== */
 [data-theme="dark"] body {
-    background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-main) 100%);
+    background-color: var(--bg-main);
 }
 
 [data-theme="dark"] .glass-card {
-    background: rgba(33, 46, 52, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.55);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"] .form-control {
+    background-color: var(--bg-input);
+    border-color: var(--border-color);
+    color: var(--text-main);
+}
+
+[data-theme="dark"] .form-control:focus {
+    background-color: var(--bg-input);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
 }
 

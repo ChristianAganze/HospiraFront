@@ -81,8 +81,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.location.href = 'medecin.html';
                         break;
                     default:
-                        alert("Erreur de redirection. Rôle inconnu : " + response.user.role);
-                        window.location.href = 'login.html';
+                        if (typeof showToast === 'function') {
+                            showToast("Rôle utilisateur inconnu : " + response.user.role, 'danger');
+                        } else {
+                            errorAlert.textContent = "Rôle utilisateur non configuré (" + response.user.role + ").";
+                            errorAlert.style.display = 'block';
+                        }
+                        return;
                 }
             }
         } catch (error) {

@@ -1,0 +1,6 @@
+{
+  "name": "Hospira",
+  "description": "Plateforme intégrée de gestion hospitalière et de suivi clinique pour patients et personnel médical.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
