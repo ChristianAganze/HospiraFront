@@ -103,7 +103,7 @@ class ApiClient {
     static staticUrl(path) {
         if (!path) return '';
         if (/^https?:\/\//i.test(path)) return path;
-        const base = API_BASE_URL.replace(/\/api\/?$/, '');
+        const base = API_BASE_URL;
         return base + '/' + String(path).replace(/^\/+/, '');
     }
 
