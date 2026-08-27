@@ -210,20 +210,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     const medecinSpecialite = rdv.medecin ? rdv.medecin.specialite : (rdv.medecin_specialite || null);
                     
                     const hasPreuve = rdv.preuve_paiement_path ? `<br><span class="badge badge-info" style="font-size:0.7rem;">💳 Reçu Joint</span>` : '';
-                    let statutBadge = `<span class="badge" style="background:var(--secondary-color); color:white;">En attente</span>${hasPreuve}`;
+                    let statutBadge = `<span class="badge badge-neutral">En attente</span>${hasPreuve}`;
                     let actionBtn = `<button class="btn btn-primary" onclick="openValiderModal(${rdv.id}, '${rdv.preuve_paiement_path || ''}', ${rdv.medecin ? rdv.medecin.id : 'null'})" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Affecter & Valider</button>`;
                     
                     if(rdv.statut === 'À payer') {
-                        statutBadge = `<span class="badge bg-warning">À payer</span>${hasPreuve}`;
+                        statutBadge = `<span class="badge badge-warning">À payer</span>${hasPreuve}`;
                         actionBtn = `-`;
                     } else if(rdv.statut === 'Confirmé') {
-                        statutBadge = `<span class="badge bg-success">Confirmé</span>${hasPreuve}`;
+                        statutBadge = `<span class="badge badge-success">Confirmé</span>${hasPreuve}`;
                         actionBtn = `-`;
                     } else if(rdv.statut === 'Annulé') {
-                        statutBadge = `<span class="badge bg-danger">Annulé</span>`;
+                        statutBadge = `<span class="badge badge-danger">Annulé</span>`;
                         actionBtn = `-`;
                     } else if(rdv.statut === 'Terminé') {
-                        statutBadge = `<span class="badge bg-info">Terminé</span>`;
+                        statutBadge = `<span class="badge badge-info">Terminé</span>`;
                         actionBtn = `-`;
                     }
 
@@ -365,18 +365,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Init
     loadRendezvous();
     loadPatients(); // Loads patient select list
-
-    // Utility: Notifications
-    window.showToast = function(message, type = "success") {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()" style="background:none; border:none; color:white; cursor:pointer;">&times;</button>`;
-        container.appendChild(toast);
-        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 5000);
-        setTimeout(() => { toast.style.opacity = '1'; }, 10); // Trigger transition
-    }
 
     // Polling for notifications (Secrétaire gets notified when patient asks RDV)
     setInterval(() => {

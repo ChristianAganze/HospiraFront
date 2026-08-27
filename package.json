@@ -1,16 +1,16 @@
 {
   "name": "hospirafront",
   "version": "1.0.0",
-  "description": "",
+  "description": "Plateforme de gestion hospitalière",
   "main": "index.js",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "vite build"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "devDependencies": {
     "vite": "^8.1.4"
   }

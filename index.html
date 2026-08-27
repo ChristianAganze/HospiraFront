@@ -24,27 +24,32 @@
             const userStr = localStorage.getItem('hospira_user');
             
             if (token && userStr) {
-                const user = JSON.parse(userStr);
-                const roleLower = user.role.toLowerCase();
-                switch(roleLower) {
-                    case 'patient': targetPage = 'portail-patient.html'; break;
-                    case 'admin': 
-                    case 'administrateur': targetPage = 'admin.html'; break;
-                    case 'secrétaire':
-                    case 'secretaire': targetPage = 'secretaire.html'; break;
-                    case 'caissier': targetPage = 'caisse.html'; break;
-                    case 'laborantin': targetPage = 'laborantin.html'; break;
-                    case 'médecin':
-                    case 'medecin': targetPage = 'medecin.html'; break;
-                }
-                
-                // Mettre à jour les boutons
-                document.querySelectorAll('.btn-login, a[href="login.html"]').forEach(link => {
-                    link.href = targetPage;
-                    if(link.classList.contains('btn-login')) {
-                        link.textContent = 'Mon Espace →';
+                let targetPage = 'login.html';
+                try {
+                    const user = JSON.parse(userStr);
+                    const roleLower = (user.role || '').toLowerCase();
+                    switch(roleLower) {
+                        case 'patient': targetPage = 'portail-patient.html'; break;
+                        case 'admin': 
+                        case 'administrateur': targetPage = 'admin.html'; break;
+                        case 'secrétaire':
+                        case 'secretaire': targetPage = 'secretaire.html'; break;
+                        case 'caissier': targetPage = 'caisse.html'; break;
+                        case 'laborantin': targetPage = 'laborantin.html'; break;
+                        case 'médecin':
+                        case 'medecin': targetPage = 'medecin.html'; break;
                     }
-                });
+                    
+                    // Mettre à jour les boutons
+                    document.querySelectorAll('.btn-login, a[href="login.html"]').forEach(link => {
+                        link.href = targetPage;
+                        if(link.classList.contains('btn-login')) {
+                            link.textContent = 'Mon Espace →';
+                        }
+                    });
+                } catch (e) {
+                    console.error('Error reading user session:', e);
+                }
             }
         });
     </script>
@@ -61,6 +66,7 @@
                 <a href="#services" class="nav-link">Services</a>
                 <a href="#about" class="nav-link">À propos</a>
                 <a href="#contact" class="nav-link">Contact</a>
+                <button id="theme-toggle" class="btn btn-secondary theme-toggle-btn" aria-label="Changer le thème" title="Changer le thème" style="padding: 0.5rem 0.65rem; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"></button>
                 <a href="login.html" class="btn btn-primary">Connexion</a>
             </div>
         </nav>
@@ -84,7 +90,7 @@
             </div>
 
             <div class="hero-image-container">
-                <img src="hero_doctor.png" alt="Médecin professionnel" class="hero-img">
+                <img src="assets/hero_doctor.png" alt="Médecin professionnel" class="hero-img" onerror="this.src='hero_doctor.png'">
                 <!-- Overlay Card -->
                 <div class="hero-stat-card">
                     <div class="stat-header">
@@ -107,12 +113,6 @@
         <!-- Partners Section -->
         <section class="partners-section">
             <h5 class="partners-title">PARTENAIRE DE CONFIANCE DES INSTITUTIONS LEADERS</h5>
-            <div class="partners-logos">
-                <div class="partner-logo"></div>
-                <div class="partner-logo"></div>
-                <div class="partner-logo"></div>
-                <div class="partner-logo"></div>
-            </div>
         </section>
 
         <!-- Services Section -->
@@ -175,7 +175,7 @@
                 <div class="contact-info">
                     <div class="info-item">
                         <strong>📍 Adresse</strong>
-                        <p>123 Avenue de la Santé, Kinshasa</p>
+                        <p>123 Avenue de la Santé, Bukavu</p>
                     </div>
                     <div class="info-item">
                         <strong>📞 Téléphone</strong>
@@ -223,7 +223,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                &copy; 2026 Hospira. Tous droits rǸservǸs.
+                &copy; 2026 Hospira. Tous droits réservés.
             </div>
         </footer>
     </div>

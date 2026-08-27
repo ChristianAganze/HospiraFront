@@ -3,10 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caisse -Hospira</title>
+    <title>Caisse - Hospira</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/responsive.css">
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('hospira-theme') === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
 </head>
 <body class="dashboard-layout">
 
@@ -37,20 +46,24 @@
             </button>
             <h1 id="page-title">Caisse</h1>
             
-            <div class="topbar-user" style="position: relative; cursor: pointer;" id="topbar-user-menu">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="text-align: right;">
-                        <h4 id="user-name-top" style="margin: 0; font-size: 0.95rem; color: var(--primary-dark);">Chargement...</h4>
-                        <span id="user-role-top" style="font-size: 0.8rem; color: var(--text-muted);">Caissier</span>
-                    </div>
-                    <img id="topbar-user-img" src="" alt="Profile" style="display: none; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);">
-                    <div class="user-avatar" id="topbar-user-initials" style="width: 40px; height: 40px; font-size: 1.2rem;">C</div>
-                </div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button id="theme-toggle" class="btn btn-secondary theme-toggle-btn" aria-label="Changer le thème" title="Changer le thème" style="padding: 0.45rem 0.6rem; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"></button>
                 
-                <!-- Dropdown Menu -->
-                <div id="user-dropdown" style="display: none; position: absolute; top: 50px; right: 0; background: white; box-shadow: var(--shadow-md); border-radius: var(--radius-md); padding: 0.5rem; min-width: 150px; z-index: 100;">
-                    <button class="btn" id="btn-profil" style="width: 100%; text-align: left; background: none; color: var(--text-main); padding: 0.5rem; justify-content: flex-start;">Mon Profil</button>
-                    <button id="btn-logout" class="btn" style="width: 100%; text-align: left; background: none; color: var(--danger-color); padding: 0.5rem; justify-content: flex-start;">Déconnexion</button>
+                <div class="topbar-user" style="position: relative; cursor: pointer;" id="topbar-user-menu">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="text-align: right;">
+                            <h4 id="user-name-top" style="margin: 0; font-size: 0.95rem; color: var(--primary-dark);">Chargement...</h4>
+                            <span id="user-role-top" style="font-size: 0.8rem; color: var(--text-muted);">Caissier</span>
+                        </div>
+                        <img id="topbar-user-img" src="" alt="Profile" style="display: none; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);">
+                        <div class="user-avatar" id="topbar-user-initials" style="width: 40px; height: 40px; font-size: 1.2rem;">C</div>
+                    </div>
+                    
+                    <!-- Dropdown Menu -->
+                    <div id="user-dropdown">
+                        <button class="btn" id="btn-profil">Mon Profil</button>
+                        <button id="btn-logout" class="btn">Déconnexion</button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -164,11 +177,21 @@
                 <h4 style="margin-bottom: 1rem;">Changer de mot de passe (Facultatif)</h4>
                 <div class="form-group">
                     <label>Ancien mot de passe</label>
-                    <input type="password" id="profile-old-pwd" class="form-control">
+                    <div class="password-wrapper">
+                        <input type="password" id="profile-old-pwd" class="form-control" placeholder="••••••••" autocomplete="current-password">
+                        <button type="button" class="toggle-password-btn" aria-label="Afficher le mot de passe" title="Afficher le mot de passe">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Nouveau mot de passe</label>
-                    <input type="password" id="profile-new-pwd" class="form-control" minlength="6">
+                    <div class="password-wrapper">
+                        <input type="password" id="profile-new-pwd" class="form-control" placeholder="••••••••" minlength="6" autocomplete="new-password">
+                        <button type="button" class="toggle-password-btn" aria-label="Afficher le mot de passe" title="Afficher le mot de passe">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
                 </div>
                 <button type="submit" id="btn-update-profile" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Enregistrer les modifications</button>
             </form>
@@ -178,6 +201,7 @@
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container"></div>
 
+    <script src="js/theme.js"></script>
     <script src="js/api.js"></script>
     <script src="js/profile.js"></script>
     <script src="js/caisse.js"></script>
