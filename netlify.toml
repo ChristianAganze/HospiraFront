@@ -3,4 +3,4 @@
   publish = "dist"
 
 [context.production.environment]
-  VITE_API_BASE_URL = "https://hospira.hercialabs.com"
+  VITE_API_BASE_URL = "https://hospira.hercialabs.com/api"

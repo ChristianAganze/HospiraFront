@@ -1,12 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Fonction globale pour mettre à jour l'affichage de l'image de profil
     window.updateProfileDisplay = function() {
-        const userStr = localStorage.getItem('hospira_user');
-        if (!userStr) return;
-        const user = JSON.parse(userStr);
+        const user = window.Auth ? Auth.getUser() : (() => { try { return JSON.parse(localStorage.getItem('hospira_user')); } catch(_e){ return null; } })();
+        if (!user) return;
         const imgEl = document.getElementById('topbar-user-img');
         const initEl = document.getElementById('topbar-user-initials');
-        
         const modalImg = document.getElementById('profile-avatar-preview-img');
         const modalInit = document.getElementById('profile-avatar-preview-initials');
         const modalName = document.getElementById('profile-user-fullname');
@@ -31,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modalRole) modalRole.textContent = user.role || 'Utilisateur';
     };
 
-    // Appeler au chargement
     updateProfileDisplay();
 
     const formProfile = document.getElementById('form-profile');
@@ -78,19 +74,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 msgDiv.style.color = 'var(--success-color)';
 
                 if (imgFile && oldPwd && newPwd) {
-                    msgDiv.textContent = '🎉 Votre photo de profil et votre mot de passe ont été mis à jour avec succès !';
+                    msgDiv.textContent = 'Votre photo de profil et votre mot de passe ont été mis à jour avec succès !';
                 } else if (imgFile) {
-                    msgDiv.textContent = '📷 Votre photo de profil a été mise à jour avec succès !';
+                    msgDiv.textContent = 'Votre photo de profil a été mise à jour avec succès !';
                 } else {
-                    msgDiv.textContent = '🔒 Votre mot de passe a été modifié avec succès !';
+                    msgDiv.textContent = 'Votre mot de passe a été modifié avec succès !';
                 }
-                
-                // Mettre à jour l'image en local
-                if (res.profile_image) {
-                    const user = JSON.parse(localStorage.getItem('hospira_user'));
-                    user.profile_image = res.profile_image;
-                    localStorage.setItem('hospira_user', JSON.stringify(user));
-                    updateProfileDisplay();
+
+                // Recharger le profil depuis le serveur pour éviter un état local obsolète
+                try {
+                    const fresh = await ApiClient.verifySession();
+                    const freshUser = fresh.user || fresh.data || fresh;
+                    if (freshUser && freshUser.role) {
+                        const token = localStorage.getItem('hospira_token');
+                        localStorage.setItem('hospira_user', JSON.stringify({ ...Auth.getUser(), ...freshUser }));
+                        updateProfileDisplay();
+                    } else if (res.profile_image) {
+                        const user = Auth.getUser();
+                        user.profile_image = res.profile_image;
+                        localStorage.setItem('hospira_user', JSON.stringify(user));
+                        updateProfileDisplay();
+                    }
+                } catch (_e) {
+                    if (res.profile_image) {
+                        const user = Auth.getUser();
+                        if (user) {
+                            user.profile_image = res.profile_image;
+                            localStorage.setItem('hospira_user', JSON.stringify(user));
+                            updateProfileDisplay();
+                        }
+                    }
                 }
 
                 formProfile.reset();
@@ -98,9 +111,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 msgDiv.style.display = 'block';
                 msgDiv.style.color = 'var(--danger-color)';
                 if (err.message && err.message.includes('Ancien mot de passe incorrect')) {
-                    msgDiv.textContent = '❌ L\'ancien mot de passe saisi est incorrect. Veuillez réessayer.';
+                    msgDiv.textContent = 'L\'ancien mot de passe saisi est incorrect. Veuillez réessayer.';
                 } else {
-                    msgDiv.textContent = '❌ ' + (err.message || 'Une erreur est survenue lors de la mise à jour.');
+                    msgDiv.textContent = err.message || 'Une erreur est survenue lors de la mise à jour.';
                 }
             } finally {
                 btn.disabled = false;

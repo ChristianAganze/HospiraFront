@@ -3,26 +3,13 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Vérification de l'authentification
-    const token = localStorage.getItem('hospira_token');
-    const userStr = localStorage.getItem('hospira_user');
-
-    if (!token || !userStr) {
-        window.location.href = 'login.html';
-        return;
-    }
-
-    const user = JSON.parse(userStr);
-    const roleLower = user.role.toLowerCase();
-    if (roleLower !== 'admin' && roleLower !== 'administrateur') {
-        window.location.href = 'login.html'; 
-        return;
-    }
+    const user = Auth.requireAuth(['Admin']);
+    if (!user) return;
 
     // 2. Initialisation de l'interface (Topbar)
     document.getElementById('user-name-top').textContent = `${user.prenom} ${user.nom}`;
     document.getElementById('user-role-top').textContent = user.role;
-    
+
     const topUserImg = document.getElementById('topbar-user-img');
     const topUserInitials = document.getElementById('topbar-user-initials');
     if (user.profile_image) {
@@ -48,12 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userDropdown.style.display = 'none';
     });
 
-    document.getElementById('btn-logout').addEventListener('click', () => {
-        localStorage.removeItem('hospira_token');
-        localStorage.removeItem('hospira_user');
-        window.location.href = 'login.html';
-    });
-
+    document.getElementById('btn-logout').addEventListener('click', () => Auth.logout());
     document.getElementById('btn-profil').addEventListener('click', (e) => {
         e.preventDefault();
         document.getElementById('modal-profile').style.display = 'flex';
@@ -84,24 +66,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const navDashboard = document.getElementById('nav-dashboard');
     const navStaff = document.getElementById('nav-staff');
     const navMessages = document.getElementById('nav-messages');
-    
+
     const viewDashboard = document.getElementById('view-dashboard-admin');
     const viewStaff = document.getElementById('view-staff');
     const viewMessages = document.getElementById('view-messages');
 
     function switchView(activeNav, activeView) {
-        // Reset navs
         [navDashboard, navStaff, navMessages].forEach(nav => nav.classList.remove('active'));
-        // Reset views
         [viewDashboard, viewStaff, viewMessages].forEach(view => view.style.display = 'none');
-        
-        // Set active
         activeNav.classList.add('active');
         activeView.style.display = 'block';
-
-        if(window.innerWidth <= 768) {
-             closeSidebar();
-        }
+        if(window.innerWidth <= 768) closeSidebar();
     }
 
     navDashboard.addEventListener('click', (e) => {
@@ -109,13 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
         switchView(navDashboard, viewDashboard);
         loadDashboardStats();
     });
-
     navStaff.addEventListener('click', (e) => {
         e.preventDefault();
         switchView(navStaff, viewStaff);
         loadStaff();
     });
-
     navMessages.addEventListener('click', (e) => {
         e.preventDefault();
         switchView(navMessages, viewMessages);
@@ -124,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 4. Charger Statistiques Dashboard
     function loadDashboardStats() {
-        ApiClient.request('/api/stats', 'GET')
+        ApiClient.request('/stats', 'GET')
             .then(data => {
                 if (data) {
                     document.getElementById('stat-patients').textContent = data.patients ?? 0;
@@ -134,8 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('stat-revenus').textContent = Number(rev).toLocaleString('fr-FR');
                 }
             })
-            .catch(error => {
-                console.error("Erreur chargement statistiques:", error);
+            .catch(() => {
                 ['stat-patients', 'stat-consultations', 'stat-rendezvous', 'stat-revenus'].forEach(id => {
                     document.getElementById(id).textContent = "Erreur";
                 });
@@ -144,72 +116,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 5. Gestion du Personnel
     function loadStaff() {
-        ApiClient.request('/api/staff', 'GET')
+        ApiClient.request('/staff', 'GET')
             .then(res => {
                 const staff = (res && res.records) ? res.records : [];
                 const tbody = document.getElementById('staff-table-body');
                 tbody.innerHTML = '';
-                
                 if (!staff || staff.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2rem;">Aucun membre du personnel enregistré.</td></tr>';
                     return;
                 }
-
                 staff.forEach(member => {
-                    const date = new Date(member.created_at).toLocaleDateString('fr-FR');
-                    const imgHtml = member.profile_image 
-                        ? `<img src="${ApiClient.staticUrl(member.profile_image)}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; vertical-align:middle; margin-right:8px;">`
-                        : `<span style="display:inline-block; width:30px; height:30px; border-radius:50%; background:var(--primary-color); color:white; text-align:center; line-height:30px; font-weight:bold; font-size:0.8rem; margin-right:8px;">${(member.prenom || 'S').charAt(0).toUpperCase()}</span>`;
+                    const date = member.created_at ? new Date(member.created_at).toLocaleDateString('fr-FR') : '-';
+                    const imgHtml = member.profile_image
+                        ? `<img src="${escapeHtml(ApiClient.staticUrl(member.profile_image))}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; vertical-align:middle; margin-right:8px;">`
+                        : `<span style="display:inline-block; width:30px; height:30px; border-radius:50%; background:var(--primary-color); color:white; text-align:center; line-height:30px; font-weight:bold; font-size:0.8rem; margin-right:8px;">${escapeHtml((member.prenom || 'S').charAt(0).toUpperCase())}</span>`;
 
                     const specialiteHtml = (member.specialite || (member.is_assistant == 1 ? 'Assistant' : ''))
-                        ? `<small style="color: var(--text-muted);">${member.specialite || ''}${member.is_assistant == 1 ? '<br>🩺 Assistant' : ''}</small>`
+                        ? `<small style="color: var(--text-muted);">${escapeHtml(member.specialite || '')}${member.is_assistant == 1 ? '<br>Assistant' : ''}</small>`
                         : '-';
 
                     const tr = document.createElement('tr');
                     tr.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
                     tr.innerHTML = `
-                        <td style="padding: 1rem 0.5rem; font-weight: 500;">${imgHtml} ${member.prenom} ${member.nom}</td>
-                        <td style="padding: 1rem 0.5rem;"><span class="badge ${getRoleBadgeClass(member.role)}">${member.role}</span></td>
+                        <td style="padding: 1rem 0.5rem; font-weight: 500;">${imgHtml} ${escapeHtml(member.prenom)} ${escapeHtml(member.nom)}</td>
+                        <td style="padding: 1rem 0.5rem;"><span class="badge ${getRoleBadgeClass(member.role)}">${escapeHtml(member.role)}</span></td>
                         <td style="padding: 1rem 0.5rem;">${specialiteHtml}</td>
-                        <td style="padding: 1rem 0.5rem; color: var(--text-muted);">${member.email}</td>
-                        <td style="padding: 1rem 0.5rem; color: var(--text-muted);">${date}</td>
+                        <td style="padding: 1rem 0.5rem; color: var(--text-muted);">${escapeHtml(member.email)}</td>
+                        <td style="padding: 1rem 0.5rem; color: var(--text-muted);">${escapeHtml(date)}</td>
                         <td style="padding: 1rem 0.5rem; text-align: right;">
-                            <button class="btn btn-secondary" onclick="deleteStaffMember(${member.id}, '${member.prenom} ${member.nom}')" style="padding:0.3rem 0.6rem; font-size:0.8rem; color:var(--danger-color); border-color:var(--danger-color);">🗑️ Supprimer</button>
+                            <button class="btn btn-secondary" onclick="deleteStaffMember(${Number(member.id)}, '${escapeHtml(member.prenom)} ${escapeHtml(member.nom)}')" style="padding:0.3rem 0.6rem; font-size:0.8rem; color:var(--danger-color); border-color:var(--danger-color);">Supprimer</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
             })
             .catch(error => {
-                console.error("Erreur personnel:", error);
-                document.getElementById('staff-table-body').innerHTML = `<tr><td colspan="6" class="text-center text-danger">Erreur: ${error.message}</td></tr>`;
+                document.getElementById('staff-table-body').innerHTML = `<tr><td colspan="6" class="text-center text-danger">Erreur: ${escapeHtml(error.message)}</td></tr>`;
             });
     }
 
     window.deleteStaffMember = function(id, name) {
         if (!confirm(`Êtes-vous sûr de vouloir supprimer ${name} du personnel ?`)) return;
-
-        ApiClient.request(`/api/staff/${id}`, 'DELETE')
+        ApiClient.request(`/staff/${id}`, 'DELETE')
             .then(() => {
                 showToast("Membre du personnel supprimé.", "success");
                 loadStaff();
             })
-            .catch(err => {
-                showToast("Erreur de suppression : " + err.message, "danger");
-            });
+            .catch(err => showToast("Erreur de suppression : " + err.message, "danger"));
     };
 
     function getRoleBadgeClass(role) {
-        const r = (role || '').toLowerCase();
+        const r = Auth.normalizeRole(role);
         switch(r) {
-            case 'admin':
-            case 'administrateur': return 'badge-danger';
-            case 'medecin':
-            case 'médecin': return 'badge-info';
-            case 'secretaire':
-            case 'secrétaire': return 'badge-warning';
+            case 'admin': return 'badge-danger';
+            case 'medecin': return 'badge-info';
+            case 'secretaire': return 'badge-warning';
             case 'caissier': return 'badge-success';
             case 'laborantin': return 'badge-info';
+            case 'infirmier': return 'badge-info';
             default: return 'badge-info';
         }
     }
@@ -227,23 +191,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const roleSelect = document.getElementById('staff-role');
     const assistantCheck = document.getElementById('staff-assistant');
 
-    // Charger les médecins pour le select "assiste le médecin"
     function loadSuperviseurOptions(selectedId) {
         const select = document.getElementById('staff-superviseur');
-        ApiClient.request('/api/users/staff', 'GET')
+        ApiClient.request('/users/staff', 'GET')
             .then(staff => {
-                const medecins = staff.filter(s => s.role === 'Medecin' && !(s.is_assistant == 1));
+                const medecins = staff.filter(s => Auth.normalizeRole(s.role) === 'medecin' && !(s.is_assistant == 1));
                 select.innerHTML = '<option value="">Sélectionnez le médecin</option>';
                 medecins.forEach(m => {
-                    const label = `Dr. ${m.prenom} ${m.nom}` + (m.specialite ? ` — ${m.specialite}` : '');
-                    select.innerHTML += `<option value="${m.id}"${String(m.id) === String(selectedId) ? ' selected' : ''}>${label}</option>`;
+                    const label = `Dr. ${escapeHtml(m.prenom)} ${escapeHtml(m.nom)}` + (m.specialite ? ` — ${escapeHtml(m.specialite)}` : '');
+                    select.innerHTML += `<option value="${escapeHtml(m.id)}"${String(m.id) === String(selectedId) ? ' selected' : ''}>${label}</option>`;
                 });
             })
             .catch(() => {});
     }
 
     function updateStaffFieldsVisibility() {
-        const isMedecin = roleSelect.value === 'Medecin';
+        const isMedecin = Auth.normalizeRole(roleSelect.value) === 'medecin';
         specialiteGroup.style.display = isMedecin ? 'block' : 'none';
         assistantGroup.style.display = isMedecin ? 'block' : 'none';
         superviseurGroup.style.display = (isMedecin && assistantCheck.checked) ? 'block' : 'none';
@@ -269,7 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
     formStaff.addEventListener('submit', async (e) => {
         e.preventDefault();
         staffMessage.style.display = 'none';
-        
         const btnSave = document.getElementById('btn-save-staff');
         btnSave.disabled = true;
         btnSave.textContent = "Création...";
@@ -281,21 +243,18 @@ document.addEventListener('DOMContentLoaded', () => {
         staffData.append('role', document.getElementById('staff-role').value);
         staffData.append('password', document.getElementById('staff-password').value);
 
-        if (roleSelect.value === 'Medecin') {
+        if (Auth.normalizeRole(roleSelect.value) === 'medecin') {
             staffData.append('specialite', document.getElementById('staff-specialite').value.trim() || '');
             if (assistantCheck.checked) {
                 staffData.append('is_assistant', '1');
                 staffData.append('superviseur_id', document.getElementById('staff-superviseur').value || '');
             }
         }
-        
         const imgFile = document.getElementById('staff-image').files[0];
-        if (imgFile) {
-            staffData.append('profile_image', imgFile);
-        }
+        if (imgFile) staffData.append('profile_image', imgFile);
 
         try {
-            await ApiClient.request('/api/users/staff', 'POST', staffData);
+            await ApiClient.request('/users/staff', 'POST', staffData);
             modalStaff.style.display = 'none';
             loadStaff();
             showToast("Membre du personnel ajouté avec succès !", "success");
@@ -311,22 +270,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 6. Messages de Contact
     function loadMessages() {
-        ApiClient.request('/api/contact/messages', 'GET')
+        ApiClient.request('/contact/messages', 'GET')
             .then(res => {
                 const messages = (res && res.data) ? res.data : [];
                 const tbody = document.getElementById('messages-table-body');
                 tbody.innerHTML = '';
-
                 const nonlus = messages.filter(m => m.statut === 'nouveau').length;
-                document.getElementById('messages-nonlus').textContent = nonlus > 0
-                    ? `${nonlus} nouveau(x) message(s)`
-                    : 'Aucun nouveau message';
-
+                document.getElementById('messages-nonlus').textContent = nonlus > 0 ? `${nonlus} nouveau(x) message(s)` : 'Aucun nouveau message';
                 if (messages.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2rem;">Aucun message de contact pour le moment.</td></tr>';
                     return;
                 }
-
                 messages.forEach(m => {
                     const tr = document.createElement('tr');
                     tr.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
@@ -337,97 +291,67 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td style="padding: 1rem 0.5rem; color: var(--text-main); max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(m.message)}">${escapeHtml(m.message)}</td>
                         <td style="padding: 1rem 0.5rem; color: var(--text-muted);">${escapeHtml(m.created_at || '')}</td>
                         <td style="padding: 1rem 0.5rem;">
-                            ${isNouveau
-                                ? '<span style="background:rgba(245,158,11,0.12); color:#b45309; padding:4px 12px; border-radius:20px; font-weight:600; font-size:0.85rem;">Nouveau</span>'
-                                : '<span style="background:rgba(16,185,129,0.12); color:var(--success-color); padding:4px 12px; border-radius:20px; font-weight:600; font-size:0.85rem;">Lu</span>'}
+                            ${isNouveau ? '<span style="background:rgba(245,158,11,0.12); color:#b45309; padding:4px 12px; border-radius:20px; font-weight:600; font-size:0.85rem;">Nouveau</span>' : '<span style="background:rgba(16,185,129,0.12); color:var(--success-color); padding:4px 12px; border-radius:20px; font-weight:600; font-size:0.85rem;">Lu</span>'}
                         </td>
                         <td style="padding: 1rem 0.5rem; text-align: right;">
-                            ${isNouveau ? `<button class="btn btn-secondary" onclick="markMessageRead(${m.id})" style="padding:0.3rem 0.6rem; font-size:0.8rem;">Marquer lu</button>` : ''}
+                            ${isNouveau ? `<button class="btn btn-secondary" onclick="markMessageRead(${Number(m.id)})" style="padding:0.3rem 0.6rem; font-size:0.8rem;">Marquer lu</button>` : ''}
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
             })
             .catch(error => {
-                console.error("Erreur messages de contact:", error);
                 document.getElementById('messages-table-body').innerHTML = `<tr><td colspan="6" class="text-center text-danger">Erreur: ${escapeHtml(error.message)}</td></tr>`;
             });
     }
 
-    function escapeHtml(str) {
-        return String(str == null ? '' : str)
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-
     window.markMessageRead = function(id) {
-        ApiClient.request(`/api/contact/messages/${id}/read`, 'POST')
-            .then(() => {
-                showToast("Message marqué comme lu.", "success");
-                loadMessages();
-            })
+        ApiClient.request(`/contact/messages/${id}/read`, 'POST')
+            .then(() => { showToast("Message marqué comme lu.", "success"); loadMessages(); })
             .catch(err => showToast("Erreur : " + err.message, "danger"));
     };
 
     document.getElementById('btn-mark-all-read').addEventListener('click', () => {
-        ApiClient.request('/api/contact/messages/read-all', 'POST')
-            .then(() => {
-                showToast("Tous les messages sont marqués comme lus.", "success");
-                loadMessages();
-            })
+        ApiClient.request('/contact/messages/read-all', 'POST')
+            .then(() => { showToast("Tous les messages sont marqués comme lus.", "success"); loadMessages(); })
             .catch(err => showToast("Erreur : " + err.message, "danger"));
     });
 
-    // 7. Polling notifications (nouveaux messages de contact, RDV, etc.)
+    // Polling notifications
     setInterval(() => {
-        ApiClient.request('/api/notifications', 'GET')
+        ApiClient.request('/notifications', 'GET')
             .then(data => {
                 if (data && data.length > 0) {
                     data.forEach(notif => {
                         showToast(notif.message, "info");
-                        ApiClient.request(`/api/notifications/${notif.id}/read`, 'POST');
+                        ApiClient.request(`/notifications/${notif.id}/read`, 'POST');
                     });
-                    // Rafraîchir la liste si la vue messages est ouverte
-                    if (viewMessages.style.display === 'block') {
-                        loadMessages();
-                    }
+                    if (viewMessages.style.display === 'block') loadMessages();
                 }
             })
             .catch(() => {});
     }, 30000);
 
-    // 8. Init
     loadDashboardStats();
 
-    // Système de Toast
     function showToast(message, type = "success") {
         const container = document.getElementById('toast-container');
         if (!container) return;
-
         const toast = document.createElement('div');
         toast.className = 'toast-notification';
-        const accent = type === 'danger' ? 'var(--danger-color)'
-            : type === 'warning' ? 'var(--warning-color)'
-            : type === 'info' ? 'var(--info-color)'
-            : 'var(--success-color)';
+        const accent = type === 'danger' ? 'var(--danger-color)' : type === 'warning' ? 'var(--warning-color)' : type === 'info' ? 'var(--info-color)' : 'var(--success-color)';
         toast.style.borderLeftColor = accent;
-
         const content = document.createElement('span');
         content.className = 'toast-content';
         content.textContent = message;
-
         const close = document.createElement('button');
         close.className = 'toast-close';
         close.innerHTML = '&times;';
         close.onclick = () => toast.remove();
-
         toast.appendChild(content);
         toast.appendChild(close);
         container.appendChild(toast);
-
-        setTimeout(() => {
-            toast.style.animation = 'fadeOutRight 0.4s forwards';
-            setTimeout(() => toast.remove(), 400);
-        }, 5000);
+        setTimeout(() => { toast.style.animation = 'fadeOutRight 0.4s forwards'; setTimeout(() => toast.remove(), 400); }, 5000);
     }
+    window.showToast = showToast;
 });

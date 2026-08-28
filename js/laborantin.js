@@ -3,32 +3,14 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Check Auth
-    const token = localStorage.getItem('hospira_token');
-    const userStr = localStorage.getItem('hospira_user');
+    const user = Auth.requireAuth(['Laborantin', 'Admin']);
+    if (!user) return;
 
-    if (!token || !userStr) {
-        window.location.href = 'login.html';
-        return;
-    }
-
-    const user = JSON.parse(userStr);
-    const roleLower = user.role.toLowerCase();
-    if (roleLower !== 'laborantin' && roleLower !== 'admin') {
-        window.location.href = 'login.html';
-        return;
-    }
-
-    // Topbar User Info
     document.getElementById('user-name-top').textContent = `${user.prenom} ${user.nom}`;
     document.getElementById('user-role-top').textContent = user.role;
-    
     const topUserInitials = document.getElementById('topbar-user-initials');
-    if (topUserInitials) {
-        topUserInitials.textContent = user.prenom.charAt(0).toUpperCase() + user.nom.charAt(0).toUpperCase();
-    }
+    if (topUserInitials) topUserInitials.textContent = (user.prenom.charAt(0) + user.nom.charAt(0)).toUpperCase();
 
-    // Topbar Dropdown
     const userMenu = document.getElementById('topbar-user-menu');
     const userDropdown = document.getElementById('user-dropdown');
     if (userMenu && userDropdown) {
@@ -36,19 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
             userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
             e.stopPropagation();
         });
-        window.addEventListener('click', () => {
-            userDropdown.style.display = 'none';
-        });
+        window.addEventListener('click', () => { userDropdown.style.display = 'none'; });
     }
 
     const btnLogout = document.getElementById('btn-logout');
-    if (btnLogout) {
-        btnLogout.addEventListener('click', () => {
-            localStorage.removeItem('hospira_token');
-            localStorage.removeItem('hospira_user');
-            window.location.href = 'login.html';
-        });
-    }
+    if (btnLogout) btnLogout.addEventListener('click', () => Auth.logout());
 
     const btnProfil = document.getElementById('btn-profil');
     const modalProfile = document.getElementById('modal-profile');
@@ -60,12 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     if (closeModalProfile && modalProfile) {
-        closeModalProfile.addEventListener('click', () => {
-            modalProfile.style.display = 'none';
-        });
+        closeModalProfile.addEventListener('click', () => { modalProfile.style.display = 'none'; });
     }
 
-    // Mobile Sidebar Toggle
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const sidebar = document.querySelector('.sidebar');
     const backdrop = document.getElementById('sidebar-backdrop');
@@ -79,43 +50,30 @@ document.addEventListener('DOMContentLoaded', () => {
             backdrop.classList.toggle('active');
         });
     }
-    if (backdrop) {
-        backdrop.addEventListener('click', closeSidebar);
-    }
+    if (backdrop) backdrop.addEventListener('click', closeSidebar);
 
-    // Load Queue
     loadLaboQueue();
 
-    // Modal Events
     const modalResultat = document.getElementById('modal-resultat');
     const closeModalResultat = document.getElementById('close-modal-resultat');
     if (closeModalResultat) {
-        closeModalResultat.addEventListener('click', () => {
-            modalResultat.style.display = 'none';
-        });
+        closeModalResultat.addEventListener('click', () => { modalResultat.style.display = 'none'; });
     }
 
-    // Form Resultat Submit
     const formResultat = document.getElementById('form-resultat');
     if (formResultat) {
         formResultat.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const prescriptionId = document.getElementById('res-prescription-id').value;
             const texte = document.getElementById('res-texte').value.trim();
             const fileInput = document.getElementById('res-fichier');
-
             const formData = new FormData();
             formData.append('prescription_examen_id', prescriptionId);
             formData.append('laborantin_id', user.id);
             formData.append('resultat_texte', texte);
-
-            if (fileInput.files.length > 0) {
-                formData.append('fichier', fileInput.files[0]);
-            }
-
+            if (fileInput.files.length > 0) formData.append('fichier', fileInput.files[0]);
             try {
-                const response = await ApiClient.request('/api/resultats-examens', 'POST', formData, true);
+                await ApiClient.request('/resultats-examens', 'POST', formData, true);
                 showToast("Résultat d'examen enregistré et publié avec succès !", "success");
                 modalResultat.style.display = 'none';
                 formResultat.reset();
@@ -130,44 +88,27 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadLaboQueue() {
     const tbody = document.getElementById('table-labo-queue');
     if (!tbody) return;
-
     try {
-        const response = await ApiClient.request('/api/labo/queue', 'GET');
+        const response = await ApiClient.request('/labo/queue', 'GET');
         if (response && response.queue && response.queue.length > 0) {
-            tbody.innerHTML = response.queue.map(item => {
+            tbody.innerHTML = '';
+            response.queue.forEach(item => {
                 const isTermine = item.statut_examen === 'Termine';
                 const badgeClass = isTermine ? 'badge-success' : 'badge-warning';
                 const statusText = isTermine ? 'Résultat Publié' : 'En Attente';
-
-                return `
-                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                        <td style="padding: 1rem; font-weight: bold; color: var(--primary-color);">
-                            <span style="background: rgba(37, 99, 235, 0.1); padding: 4px 10px; border-radius: var(--radius-pill);">
-                                ${item.ticket_labo || 'LAB-000'}
-                            </span>
-                        </td>
-                        <td style="padding: 1rem;">
-                            <strong>${item.patient_prenom} ${item.patient_nom}</strong><br>
-                            <small style="color: var(--text-muted);">${item.sexe === 'M' ? 'Homme' : 'Femme'} - ${item.age || '?'} ans</small>
-                        </td>
-                        <td style="padding: 1rem;">
-                            <strong>${item.examen_nom}</strong><br>
-                            <small style="color: var(--text-muted);">${item.examen_desc || ''}</small>
-                        </td>
-                        <td style="padding: 1rem;">
-                            Dr. ${item.medecin_prenom} ${item.medecin_nom}
-                        </td>
-                        <td style="padding: 1rem;">
-                            <span class="badge ${badgeClass}">${statusText}</span>
-                        </td>
-                        <td style="padding: 1rem; text-align: right;">
-                            <button class="btn ${isTermine ? 'btn-secondary' : 'btn-primary'}" onclick="openModalResultat(${item.id}, '${item.patient_prenom} ${item.patient_nom}', '${item.examen_nom}', '${encodeURIComponent(item.resultat_texte || '')}')">
-                                ${isTermine ? '✏️ Modifier' : '🧪 Saisir Résultat'}
-                            </button>
-                        </td>
-                    </tr>
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
+                tr.innerHTML = `
+                    <td style="padding: 1rem; font-weight: bold; color: var(--primary-color);"><span style="background: rgba(37, 99, 235, 0.1); padding: 4px 10px; border-radius: var(--radius-pill);">${escapeHtml(item.ticket_labo || 'LAB-000')}</span></td>
+                    <td style="padding: 1rem;"><strong>${escapeHtml(item.patient_prenom)} ${escapeHtml(item.patient_nom)}</strong><br><small style="color: var(--text-muted);">${item.sexe === 'M' ? 'Homme' : 'Femme'} - ${escapeHtml(item.age || '?')} ans</small></td>
+                    <td style="padding: 1rem;"><strong>${escapeHtml(item.examen_nom)}</strong><br><small style="color: var(--text-muted);">${escapeHtml(item.examen_desc || '')}</small></td>
+                    <td style="padding: 1rem;">Dr. ${escapeHtml(item.medecin_prenom)} ${escapeHtml(item.medecin_nom)}</td>
+                    <td style="padding: 1rem;"><span class="badge ${badgeClass}">${statusText}</span></td>
+                    <td style="padding: 1rem; text-align: right;"><button class="btn ${isTermine ? 'btn-secondary' : 'btn-primary'}">${isTermine ? 'Modifier' : 'Saisir Résultat'}</button></td>
                 `;
-            }).join('');
+                tr.querySelector('button').addEventListener('click', () => openModalResultat(item.id, `${item.patient_prenom} ${item.patient_nom}`, item.examen_nom, item.resultat_texte || ''));
+                tbody.appendChild(tr);
+            });
         } else {
             tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding: 2rem; color: var(--text-muted);">Aucun examen en attente pour le moment.</td></tr>`;
         }
@@ -176,11 +117,11 @@ async function loadLaboQueue() {
     }
 }
 
-function openModalResultat(id, patientName, examenNom, existingTextEncoded) {
+function openModalResultat(id, patientName, examenNom, existingText) {
     document.getElementById('res-prescription-id').value = id;
     document.getElementById('res-patient-name').textContent = patientName;
     document.getElementById('res-examen-nom').textContent = examenNom;
-    document.getElementById('res-texte').value = decodeURIComponent(existingTextEncoded || '');
-    
+    document.getElementById('res-texte').value = existingText || '';
     document.getElementById('modal-resultat').style.display = 'flex';
 }
+window.openModalResultat = openModalResultat;

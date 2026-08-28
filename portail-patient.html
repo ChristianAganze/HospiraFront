@@ -332,20 +332,18 @@
 
     <script src="js/theme.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/profile.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const token = localStorage.getItem('hospira_token');
-            const userStr = localStorage.getItem('hospira_user');
-            const user = userStr ? JSON.parse(userStr) : null;
-
-            if (!token || !user || user.role !== 'Patient') {
-                window.location.href = 'login.html';
-                return;
-            }
+            const user = Auth.requireAuth(['Patient']);
+            if (!user) return;
 
             document.getElementById('patient-name-top').textContent = `${user.prenom} ${user.nom}`;
             document.getElementById('patient-firstname').textContent = user.prenom;
+            let tarifConsultation = 15000;
+            ApiClient.request('/config/tarif', 'GET').then(r => { tarifConsultation = Number(r.tarif ?? r.prix ?? r.montant ?? 15000); loadMyExamensAndFactures(); }).catch(()=>{});
+
 
             // --- SPA TAB SWITCHING LOGIC (GDE UI/UX) ---
             const navDashboard = document.getElementById('nav-dashboard');
@@ -419,11 +417,7 @@
                 document.getElementById('modal-profile').style.display = 'none';
             });
 
-            document.getElementById('btn-logout').addEventListener('click', () => {
-                localStorage.removeItem('hospira_token');
-                localStorage.removeItem('hospira_user');
-                window.location.href = 'login.html';
-            });
+            document.getElementById('btn-logout').addEventListener('click', () => Auth.logout());
 
             // Modal Rendez-vous
             const modalRdv = document.getElementById('modal-new-rdv');
@@ -443,7 +437,7 @@
             async function loadMyRendezvous() {
                 const list = document.getElementById('rdv-dedicated-list');
                 try {
-                    const response = await ApiClient.request(`/api/patient/rendezvous`, 'GET');
+                    const response = await ApiClient.request(`/patient/rendezvous`, 'GET');
                     if (response && response.records) {
                         const myRdv = response.records;
 
@@ -468,20 +462,20 @@
                                 if (r.statut === 'Annulé') { badgeColor = 'rgba(239,68,68,0.15)'; textColor = '#ef4444'; }
 
                                 const preuveBadge = r.preuve_paiement_path 
-                                    ? `<span style="font-size:0.75rem; background:rgba(37,99,235,0.1); color:var(--primary-color); padding:3px 8px; border-radius:12px; margin-left:8px;">💳 Reçu Joint</span>`
+                                    ? `<span style="font-size:0.75rem; background:rgba(37,99,235,0.1); color:var(--primary-color); padding:3px 8px; border-radius:12px; margin-left:8px;">Reçu Joint</span>`
                                     : '';
 
                                 return `
                                     <div class="card" style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                                         <div>
-                                            <h4 style="margin: 0; font-size: 1.1rem; color: var(--primary-dark);">Dr. ${r.medecin_nom || 'En attente d\'affectation'}${r.medecin_specialite ? ` <small style="color:var(--text-muted); font-weight:normal;">(${r.medecin_specialite})</small>` : ''}</h4>
+                                            <h4 style="margin: 0; font-size: 1.1rem; color: var(--primary-dark);">Dr. ${escapeHtml(r.medecin_nom || 'En attente d\'affectation')}${r.medecin_specialite ? ` <small style="color:var(--text-muted); font-weight:normal;">(${escapeHtml(r.medecin_specialite)})</small>` : ''}</h4>
                                             <p style="margin: 0.2rem 0; color: var(--text-muted); font-size: 0.9rem;">
-                                                📅 ${new Date(r.date_heure).toLocaleString('fr-FR')} | Motif : ${r.motif || 'Consultation'}
+                                                ${new Date(r.date_heure).toLocaleString('fr-FR')} | Motif : ${escapeHtml(r.motif || 'Consultation')}
                                             </p>
                                         </div>
                                         <div>
                                             <span style="font-size: 0.85rem; font-weight: 600; padding: 0.4rem 0.8rem; border-radius: 20px; background: ${badgeColor}; color: ${textColor};">
-                                                ${r.statut}
+                                                ${escapeHtml(r.statut)}
                                             </span>
                                             ${preuveBadge}
                                         </div>
@@ -508,16 +502,16 @@
                 const list = document.getElementById('consultations-dedicated-list');
                 try {
                     if (!user.patient_id) return;
-                    const response = await ApiClient.request(`/api/patient/consultations`, 'GET');
+                    const response = await ApiClient.request(`/patient/consultations`, 'GET');
                     if (response && response.records && response.records.length > 0) {
                         document.getElementById('dash-cons-count').textContent = response.records.length;
                         list.innerHTML = response.records.map(c => `
                             <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                                <td style="padding: 1rem; font-weight: 500;">${new Date(c.date_consultation).toLocaleDateString('fr-FR')}</td>
-                                <td style="padding: 1rem;">Dr. ${c.medecin_prenom} ${c.medecin_nom}</td>
-                                <td style="padding: 1rem;">${c.diagnostic || 'Consulation effectuée'}</td>
+                                <td style="padding: 1rem; font-weight: 500;">${escapeHtml(new Date(c.date_consultation).toLocaleDateString('fr-FR'))}</td>
+                                <td style="padding: 1rem;">Dr. ${escapeHtml(c.medecin_prenom)} ${escapeHtml(c.medecin_nom)}</td>
+                                <td style="padding: 1rem;">${escapeHtml(c.diagnostic || 'Consultation effectuée')}</td>
                                 <td style="padding: 1rem;">
-                                    ${c.ordonnance ? `<div style="background:var(--bg-main); padding:0.5rem; border-radius:4px; font-size:0.85rem;">${c.ordonnance.replace(/\n/g, '<br>')}</div>` : '-'}
+                                    ${c.ordonnance ? `<div style="background:var(--bg-main); padding:0.5rem; border-radius:4px; font-size:0.85rem;">${escapeHtml(c.ordonnance).replace(/\n/g, '<br>')}</div>` : '-'}
                                 </td>
                             </tr>
                         `).join('');
@@ -535,17 +529,17 @@
 
                 try {
                     // Factures RDV
-                    const rdvRes = await ApiClient.request(`/api/patient/rendezvous`, 'GET');
+                    const rdvRes = await ApiClient.request(`/patient/rendezvous`, 'GET');
                     if (rdvRes && rdvRes.records) {
                         const myRdv = rdvRes.records;
                         if (myRdv.length > 0) {
                             listFactures.innerHTML = myRdv.map(r => `
                                 <div style="border-bottom: 1px solid rgba(0,0,0,0.05); padding: 0.75rem 0; display: flex; justify-content: space-between; align-items: center;">
                                     <div>
-                                        <strong>Consultation Dr. ${r.medecin_nom}</strong><br>
-                                        <small style="color: var(--text-muted);">${new Date(r.date_heure).toLocaleDateString('fr-FR')}</small>
+                                        <strong>Consultation Dr. ${escapeHtml(r.medecin_nom || 'à affecter')}</strong><br>
+                                        <small style="color: var(--text-muted);">${escapeHtml(new Date(r.date_heure).toLocaleDateString('fr-FR'))}</small>
                                     </div>
-                                    <span class="badge ${r.statut === 'Confirmé' || r.statut === 'Terminé' ? 'badge-success' : 'badge-warning'}">${r.statut === 'Confirmé' || r.statut === 'Terminé' ? 'Payée (15 000 FC)' : 'À payer (15 000 FC)'}</span>
+                                    <span class="badge ${r.statut === 'Confirmé' || r.statut === 'Terminé' ? 'badge-success' : 'badge-warning'}">${r.statut === 'Confirmé' || r.statut === 'Terminé' ? `Payée (${tarifConsultation.toLocaleString('fr-FR')} FC)` : `À payer (${tarifConsultation.toLocaleString('fr-FR')} FC)`}</span>
                                 </div>
                             `).join('');
                         } else {
@@ -555,15 +549,15 @@
 
                     // Examens
                     if (!user.patient_id) return;
-                    const exRes = await ApiClient.request(`/api/patient/prescriptions`, 'GET');
+                    const exRes = await ApiClient.request(`/patient/prescriptions`, 'GET');
                     if (exRes && exRes.prescriptions && exRes.prescriptions.length > 0) {
                         listExamens.innerHTML = exRes.prescriptions.map(e => `
                             <div style="border-bottom: 1px solid rgba(0,0,0,0.05); padding: 0.75rem 0;">
-                                <strong>${e.examen_nom}</strong> <span style="font-weight:bold; color:var(--primary-color);">(${e.examen_prix} FC)</span><br>
-                                <small style="color: var(--text-muted);">Prescrit par Dr. ${e.medecin_prenom} ${e.medecin_nom}</small><br>
+                                <strong>${escapeHtml(e.examen_nom)}</strong> <span style="font-weight:bold; color:var(--primary-color);">(${escapeHtml(e.examen_prix)} FC)</span><br>
+                                <small style="color: var(--text-muted);">Prescrit par Dr. ${escapeHtml(e.medecin_prenom)} ${escapeHtml(e.medecin_nom)}</small><br>
                                 <div style="margin-top:0.4rem;">
                                     <span class="badge ${e.statut_paiement === 'Paye' ? 'badge-success' : 'badge-warning'}">${e.statut_paiement === 'Paye' ? 'Payé' : 'À payer'}</span>
-                                    ${e.ticket_labo ? `<span class="badge badge-info">Ticket Labo : ${e.ticket_labo}</span>` : ''}
+                                    ${e.ticket_labo ? `<span class="badge badge-info">Ticket Labo : ${escapeHtml(e.ticket_labo)}</span>` : ''}
                                     <span class="badge ${e.statut_examen === 'Termine' ? 'badge-success' : 'badge-info'}">${e.statut_examen === 'Termine' ? 'Résultat Publié' : 'En attente au labo'}</span>
                                 </div>
                             </div>
@@ -596,7 +590,7 @@
                 }
 
                 try {
-                    await ApiClient.request('/api/rendezvous', 'POST', formData, true);
+                    await ApiClient.request('/rendezvous', 'POST', formData, true);
                     showToast("Demande de rendez-vous envoyée avec succès !", "success");
                     modalRdv.style.display = 'none';
                     document.getElementById('form-new-rdv').reset();

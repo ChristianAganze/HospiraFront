@@ -1,21 +1,31 @@
 /**
- * api.js - Fichier central pour les appels fetch() vers le backend Hospira
- * Intègre la gestion des notifications Toast et la sérialisation des requêtes.
+ * api.js - Client central pour les appels fetch() vers le backend Hospira
+ * Base URL injectée via VITE_API_BASE_URL (window.API_BASE_URL).
+ * Aucun fallback localhost / URL en dur.
  */
 
-const API_BASE_URL = window.API_BASE_URL || (() => {
-    const host = window.location.hostname || '127.0.0.1';
-    const proto = (window.location.protocol === 'file:' || window.location.protocol === '') ? 'http:' : window.location.protocol;
-    return proto + '//' + host + '/Hospira/HospiraBackend/public/api';
+const API_BASE_URL = (() => {
+    const raw = (typeof window !== 'undefined' && window.API_BASE_URL) ? String(window.API_BASE_URL) : '';
+    return raw.trim().replace(/\/+$/, '');
 })();
 
-console.log('[Hospira] API Base URL:', API_BASE_URL);
+function ensureApiBaseUrl() {
+    if (!API_BASE_URL) {
+        throw new Error('Configuration API manquante: VITE_API_BASE_URL non définie. Vérifiez votre fichier .env ou la config Netlify.');
+    }
+}
+
+/**
+ * Échappe une chaîne pour insertion HTML sécurisée.
+ */
+function escapeHtml(str) {
+    return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 /**
  * Système de Toast Médical Accessible
- * @param {string} message - Message à afficher
- * @param {'success'|'danger'|'warning'|'info'} type - Type de notification
- * @param {number} duration - Durée en millisecondes (défaut: 4000ms)
  */
 function showToast(message, type = 'info', duration = 4000) {
     let container = document.querySelector('.toast-container');
@@ -39,7 +49,7 @@ function showToast(message, type = 'info', duration = 4000) {
     toast.innerHTML = `
         <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-size: 1.1rem;">${icon}</span>
-            <div class="toast-content">${message}</div>
+            <div class="toast-content">${escapeHtml(message)}</div>
         </div>
         <button class="toast-close" type="button" aria-label="Fermer">✕</button>
     `;
@@ -61,10 +71,15 @@ function showToast(message, type = 'info', duration = 4000) {
 }
 
 window.showToast = showToast;
+window.escapeHtml = escapeHtml;
 
 class ApiClient {
     static async request(endpoint, method = 'GET', data = null, isFormData = false) {
-        let cleanEndpoint = endpoint;
+        ensureApiBaseUrl();
+
+        let cleanEndpoint = String(endpoint || '').trim();
+        // Convention unifiée: endpoints sans préfixe /api (ex: /auth/login).
+        // Si un appel legacy passe /api/..., on le normalise.
         if (cleanEndpoint.startsWith('/api/')) {
             cleanEndpoint = cleanEndpoint.substring(4);
         }
@@ -72,17 +87,15 @@ class ApiClient {
             cleanEndpoint = '/' + cleanEndpoint;
         }
         const url = `${API_BASE_URL}${cleanEndpoint}`;
-        
+
         const headers = {
             'Accept': 'application/json'
         };
 
-        // Si data n'est pas un FormData, on ajoute le Content-Type JSON
         if (!(data instanceof FormData) && !isFormData) {
             headers['Content-Type'] = 'application/json';
         }
 
-        // Ajouter le token JWT si disponible
         const token = localStorage.getItem('hospira_token');
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
@@ -97,37 +110,44 @@ class ApiClient {
             config.body = (data instanceof FormData || isFormData) ? data : JSON.stringify(data);
         }
 
+        let response;
         try {
-            console.log(`[Hospira] ${method} ${url}`);
-            const response = await fetch(url, config);
-
-            let responseData = {};
-            try {
-                responseData = await response.json();
-            } catch (parseError) {
-                console.error('[Hospira] Réponse non-JSON:', parseError, 'Status:', response.status);
-                throw new Error('Le serveur a répondu de façon inattendue (HTTP ' + response.status + ').');
-            }
-
-            if (!response.ok) {
-                if (response.status === 401) {
-                    localStorage.removeItem('hospira_token');
-                    localStorage.removeItem('hospira_user');
-                    window.location.href = 'login.html';
-                } else if (responseData && responseData.must_change_password) {
-                    window.location.href = 'motdepasse.html';
-                }
-                throw new Error(responseData.message || ('Erreur serveur (' + response.status + ').'));
-            }
-
-            return responseData;
-        } catch (error) {
-            console.warn('[Hospira] Erreur API:', error.message, 'URL:', url);
-            if (error instanceof TypeError || /failed to fetch|NetworkError|Load failed/i.test(error.message)) {
-                throw new Error('Impossible de contacter le serveur à ' + url + '. Vérifiez que votre backend Hospira est accessible.');
-            }
-            throw error;
+            response = await fetch(url, config);
+        } catch (err) {
+            // Ne jamais exposer l'URL complète côté UI
+            throw new Error('Impossible de contacter le serveur. Vérifiez votre connexion ou réessayez plus tard.');
         }
+
+        let responseData = {};
+        try {
+            const text = await response.text();
+            responseData = text ? JSON.parse(text) : {};
+        } catch (_parseError) {
+            throw new Error('Le serveur a répondu de façon inattendue (HTTP ' + response.status + ').');
+        }
+
+        // must_change_password: rediriger quel que soit le status (200 ou erreur métier)
+        if (responseData && responseData.must_change_password) {
+            const current = window.location.pathname.split('/').pop();
+            if (current !== 'motdepasse.html') {
+                window.location.href = 'motdepasse.html';
+            }
+            throw new Error(responseData.message || 'Vous devez changer votre mot de passe avant de continuer.');
+        }
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                localStorage.removeItem('hospira_token');
+                localStorage.removeItem('hospira_user');
+                const current = window.location.pathname.split('/').pop();
+                if (current !== 'login.html' && current !== 'motdepasse.html') {
+                    window.location.href = 'login.html';
+                }
+            }
+            throw new Error(responseData.message || ('Erreur serveur (' + response.status + ').'));
+        }
+
+        return responseData;
     }
 
     static async login(email, password) {
@@ -142,10 +162,16 @@ class ApiClient {
         return this.request('/auth/change-password', 'POST', { old_password: oldPassword, new_password: newPassword });
     }
 
+    static async verifySession() {
+        return this.request('/auth/me', 'GET');
+    }
+
     static staticUrl(path) {
         if (!path) return '';
         if (/^https?:\/\//i.test(path)) return path;
-        const base = API_BASE_URL;
+        ensureApiBaseUrl();
+        // path peut être du type /storage/... ou storage/... — on normalise
+        const base = API_BASE_URL.replace(/\/api\/?$/i, '');
         return base + '/' + String(path).replace(/^\/+/, '');
     }
 
@@ -201,4 +227,3 @@ class ApiClient {
         return this.request(`/rendezvous/${id}/payer`, 'POST', paymentData);
     }
 }
-

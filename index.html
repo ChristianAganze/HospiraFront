@@ -18,39 +18,21 @@
             } catch (e) { /* ignore */ }
         })();
     </script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const token = localStorage.getItem('hospira_token');
-            const userStr = localStorage.getItem('hospira_user');
-            
-            if (token && userStr) {
-                let targetPage = 'login.html';
-                try {
-                    const user = JSON.parse(userStr);
-                    const roleLower = (user.role || '').toLowerCase();
-                    switch(roleLower) {
-                        case 'patient': targetPage = 'portail-patient.html'; break;
-                        case 'admin': 
-                        case 'administrateur': targetPage = 'admin.html'; break;
-                        case 'secrétaire':
-                        case 'secretaire': targetPage = 'secretaire.html'; break;
-                        case 'caissier': targetPage = 'caisse.html'; break;
-                        case 'laborantin': targetPage = 'laborantin.html'; break;
-                        case 'médecin':
-                        case 'medecin': targetPage = 'medecin.html'; break;
-                    }
-                    
-                    // Mettre à jour les boutons
-                    document.querySelectorAll('.btn-login, a[href="login.html"]').forEach(link => {
-                        link.href = targetPage;
-                        if(link.classList.contains('btn-login')) {
-                            link.textContent = 'Mon Espace →';
-                        }
-                    });
-                } catch (e) {
-                    console.error('Error reading user session:', e);
+            if (!Auth.isAuthenticated()) return;
+            const user = Auth.getUser();
+            if (!user) return;
+            if (user.must_change_password) return;
+            const targetPage = Auth.getRouteForCurrentUser();
+            document.querySelectorAll('.btn-login, a[href="login.html"]').forEach(link => {
+                link.href = targetPage;
+                if(link.classList.contains('btn-login')) {
+                    link.textContent = 'Mon Espace →';
                 }
-            }
+            });
         });
     </script>
 </head>
@@ -227,7 +209,6 @@
             </div>
         </footer>
     </div>
-    <script src="js/api.js"></script>
     <script>
         document.getElementById('contact-form').addEventListener('submit', async function (e) {
             e.preventDefault();

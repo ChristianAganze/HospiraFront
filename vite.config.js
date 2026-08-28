@@ -3,7 +3,10 @@ import { resolve } from 'path';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
-    const apiUrl = env.VITE_API_BASE_URL || 'http://localhost/Hospira/HospiraBackend/public/api';
+    const apiUrl = (env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '');
+    if (!apiUrl) {
+        console.warn('[Hospira] VITE_API_BASE_URL manquant — définissez-le dans .env (ex: https://hospira.hercialabs.com/api)');
+    }
 
     return {
         publicDir: 'assets',
