@@ -38,6 +38,18 @@
                     Consultation
                 </a>
             </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="nav-patients">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Dossiers Patients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" id="nav-examens">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"></path><path d="M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"></path><path d="M7.5 15h9"></path></svg>
+                    Résultats Labo
+                </a>
+            </li>
         </ul>
     </aside>
 
@@ -111,8 +123,14 @@
                     <div style="flex: 1; min-width: 300px;">
                         <div class="card" style="height: 100%;">
                             <h3 style="margin-top: 0;">Historique Médical</h3>
-                            <div id="consultation-historique" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+                            <div id="consultation-historique" style="max-height: 420px; overflow-y: auto; padding-right: 10px;">
                                 <p class="text-center text-muted">Aucun historique disponible.</p>
+                            </div>
+                            <div style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                                <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem;">Examens de laboratoire</h4>
+                                <div id="consultation-examens" style="max-height: 280px; overflow-y: auto;">
+                                    <p class="text-center text-muted" style="padding: 0.75rem;">Aucun examen disponible.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -163,7 +181,7 @@
                                         <!-- Liste des médicaments ajoutés -->
                                     </div>
 
-                                    <div class="grid-presc" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.5rem; align-items: end;">
+                                    <div class="grid-presc" style="display: grid; grid-template-columns: 2fr 1.4fr 0.9fr auto; gap: 0.5rem; align-items: end;">
                                         <div class="form-group" style="margin: 0;">
                                             <label style="font-size: 0.8rem;">Médicament</label>
                                             <input type="text" class="form-control" id="presc-medicament" placeholder="Nom du médicament">
@@ -171,6 +189,10 @@
                                         <div class="form-group" style="margin: 0;">
                                             <label style="font-size: 0.8rem;">Posologie</label>
                                             <input type="text" class="form-control" id="presc-posologie" placeholder="Ex: 1 matin, 1 soir">
+                                        </div>
+                                        <div class="form-group" style="margin: 0;">
+                                            <label style="font-size: 0.8rem;">Durée</label>
+                                            <input type="text" class="form-control" id="presc-duree" placeholder="Ex: 7 jours">
                                         </div>
                                         <button type="button" class="btn btn-secondary" id="btn-add-medicament">Ajouter</button>
                                     </div>
@@ -190,11 +212,80 @@
                                 </div>
 
                                 <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
-                                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('form-nouvelle-consultation').reset()">Effacer</button>
+                                    <button type="button" class="btn btn-secondary" id="btn-reset-consultation">Effacer</button>
                                     <button type="submit" class="btn btn-primary">Terminer la consultation</button>
                                 </div>
                             </form>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vue Dossiers Patients (recherche hors file d'attente) -->
+            <div id="view-patients" style="display: none;">
+                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h2 style="margin: 0; color: var(--text-main);">Dossiers Patients</h2>
+                        <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Recherchez un patient par nom, prénom, IUP ou téléphone pour ouvrir son dossier.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="patients-search">Rechercher un patient</label>
+                        <input type="search" id="patients-search" class="form-control" placeholder="Nom, prénom, IUP ou téléphone…" autocomplete="off">
+                    </div>
+                    <div id="patients-list">
+                        <p class="text-center text-muted" style="padding: 2rem;">Chargement des dossiers patients…</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vue Résultats de Laboratoire -->
+            <div id="view-examens" style="display: none;">
+                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h2 style="margin: 0; color: var(--text-main);">Résultats de Laboratoire</h2>
+                        <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Consultez les examens prescrits, leur statut et les résultats publiés par le laboratoire.</p>
+                    </div>
+                    <button id="btn-refresh-examens" class="btn btn-secondary">Actualiser</button>
+                </div>
+
+                <div class="card" style="margin-bottom: 1rem;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <div class="form-group" style="flex: 1; min-width: 220px; margin: 0;">
+                            <label for="examens-search">Rechercher</label>
+                            <input type="search" id="examens-search" class="form-control" placeholder="Patient, IUP ou examen…" autocomplete="off">
+                        </div>
+                        <div class="form-group" style="min-width: 190px; margin: 0;">
+                            <label for="examens-statut">Statut</label>
+                            <select id="examens-statut" class="form-control">
+                                <option value="">Tous les statuts</option>
+                                <option value="Termine">Résultats publiés</option>
+                                <option value="En attente">En attente</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--bg-main);">
+                                    <th style="padding: 0.9rem 0.5rem; color: var(--text-muted);">Patient</th>
+                                    <th style="padding: 0.9rem 0.5rem; color: var(--text-muted);">Examen</th>
+                                    <th style="padding: 0.9rem 0.5rem; color: var(--text-muted);">Prescripteur</th>
+                                    <th style="padding: 0.9rem 0.5rem; color: var(--text-muted);">Date</th>
+                                    <th style="padding: 0.9rem 0.5rem; color: var(--text-muted);">Paiement</th>
+                                    <th style="padding: 0.9rem 0.5rem; color: var(--text-muted);">Statut</th>
+                                    <th style="padding: 0.9rem 0.5rem; color: var(--text-muted);">Résultat</th>
+                                </tr>
+                            </thead>
+                            <tbody id="examens-results-body">
+                                <tr><td colspan="7" class="text-center text-muted" style="padding: 2rem;">Chargement des examens…</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -255,6 +346,7 @@
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/profile.js"></script>
+    <script src="js/notifications.js"></script>
     <script src="js/medecin.js"></script>
 </body>
 </html>

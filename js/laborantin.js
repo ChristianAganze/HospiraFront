@@ -54,6 +54,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadLaboQueue();
 
+    // Les notifications sont gérées par js/notifications.js ; on rafraîchit
+    // la file du laboratoire dès qu'un nouvel examen payé arrive.
+    document.addEventListener('hospira:notification', () => {
+        loadLaboQueue();
+    });
+
     const modalResultat = document.getElementById('modal-resultat');
     const closeModalResultat = document.getElementById('close-modal-resultat');
     if (closeModalResultat) {

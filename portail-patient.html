@@ -334,6 +334,7 @@
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/profile.js"></script>
+    <script src="js/notifications.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const user = Auth.requireAuth(['Patient']);
@@ -487,9 +488,11 @@
                                 <div class="card text-center" style="padding: 3rem;">
                                     <h3 style="color: var(--text-muted); margin-bottom: 1rem;">Vous n'avez encore aucun rendez-vous</h3>
                                     <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Prenez rendez-vous en quelques clics avec nos spécialistes.</p>
-                                    <button class="btn btn-primary" onclick="openRdvModal()">+ Demander un Rendez-vous</button>
+                                    <button class="btn btn-primary" id="btn-empty-open-rdv">+ Demander un Rendez-vous</button>
                                 </div>
                             `;
+                            const emptyBtn = document.getElementById('btn-empty-open-rdv');
+                            if (emptyBtn) emptyBtn.addEventListener('click', openRdvModal);
                         }
                     }
                 } catch(err) {
@@ -551,17 +554,26 @@
                     if (!user.patient_id) return;
                     const exRes = await ApiClient.request(`/patient/prescriptions`, 'GET');
                     if (exRes && exRes.prescriptions && exRes.prescriptions.length > 0) {
-                        listExamens.innerHTML = exRes.prescriptions.map(e => `
+                        listExamens.innerHTML = exRes.prescriptions.map(e => {
+                            let fileUrl = '';
+                            if (e.fichier_path) {
+                                try { fileUrl = ApiClient.staticUrl(e.fichier_path); } catch (_err) { fileUrl = e.fichier_path; }
+                            }
+                            const done = e.statut_examen === 'Termine';
+                            return `
                             <div style="border-bottom: 1px solid rgba(0,0,0,0.05); padding: 0.75rem 0;">
                                 <strong>${escapeHtml(e.examen_nom)}</strong> <span style="font-weight:bold; color:var(--primary-color);">(${escapeHtml(e.examen_prix)} FC)</span><br>
                                 <small style="color: var(--text-muted);">Prescrit par Dr. ${escapeHtml(e.medecin_prenom)} ${escapeHtml(e.medecin_nom)}</small><br>
                                 <div style="margin-top:0.4rem;">
                                     <span class="badge ${e.statut_paiement === 'Paye' ? 'badge-success' : 'badge-warning'}">${e.statut_paiement === 'Paye' ? 'Payé' : 'À payer'}</span>
                                     ${e.ticket_labo ? `<span class="badge badge-info">Ticket Labo : ${escapeHtml(e.ticket_labo)}</span>` : ''}
-                                    <span class="badge ${e.statut_examen === 'Termine' ? 'badge-success' : 'badge-info'}">${e.statut_examen === 'Termine' ? 'Résultat Publié' : 'En attente au labo'}</span>
+                                    <span class="badge ${done ? 'badge-success' : 'badge-info'}">${done ? 'Résultat Publié' : 'En attente au labo'}</span>
                                 </div>
+                                ${done && e.resultat_texte ? `<div style="margin-top:0.5rem; background:var(--bg-main); padding:0.6rem 0.75rem; border-radius:var(--radius-md); font-size:0.85rem; white-space:pre-wrap; color:var(--text-main);">${escapeHtml(e.resultat_texte)}</div>` : ''}
+                                ${done && fileUrl ? `<a href="${escapeHtml(fileUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-top:0.5rem; display:inline-block; padding:0.25rem 0.6rem; font-size:0.78rem;">Télécharger le résultat</a>` : ''}
                             </div>
-                        `).join('');
+                        `;
+                        }).join('');
                     } else {
                         listExamens.innerHTML = `<p class="text-center text-muted" style="padding: 1.5rem;">Aucun examen prescrit.</p>`;
                     }
@@ -604,6 +616,13 @@
             loadMyRendezvous();
             loadMyConsultations();
             loadMyExamensAndFactures();
+
+            // Rafraîchir les listes lorsqu'une nouvelle notification arrive
+            document.addEventListener('hospira:notification', () => {
+                loadMyRendezvous();
+                loadMyConsultations();
+                loadMyExamensAndFactures();
+            });
         });
     </script>
 </body>

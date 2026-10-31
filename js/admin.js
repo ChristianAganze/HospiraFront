@@ -83,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         switchView(navDashboard, viewDashboard);
         loadDashboardStats();
+        loadChartStats(currentPeriod);
     });
     navStaff.addEventListener('click', (e) => {
         e.preventDefault();
@@ -113,6 +114,437 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
     }
+
+    // 4.b Graphiques d'analyse (Chart.js)
+    const chartsStatus = document.getElementById('charts-status');
+    const periodSelect = document.getElementById('charts-period');
+    const chartInstances = {};
+    const CHART_CANVASES = [
+        'chart-activite',
+        'chart-revenus',
+        'chart-rdv-statuts',
+        'chart-examens-statuts',
+        'chart-top-medecins',
+        'chart-paiements-methodes'
+    ];
+
+    let chartsData = null;
+    let currentPeriod = Number(periodSelect && periodSelect.value) || 14;
+    let chartRequestId = 0;
+
+    const nfFC = new Intl.NumberFormat('fr-FR');
+    const nfCompact = new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 });
+
+    function cssVar(name, fallback) {
+        const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        return value || fallback;
+    }
+
+    function withAlpha(color, alpha) {
+        const value = String(color || '').trim();
+        const match = /^#([0-9a-f]{6})$/i.exec(value);
+        if (!match) return value;
+        const int = parseInt(match[1], 16);
+        return `rgba(${(int >> 16) & 255}, ${(int >> 8) & 255}, ${int & 255}, ${alpha})`;
+    }
+
+    function chartPalette() {
+        return {
+            primary: cssVar('--primary-color', '#0d4848'),
+            secondary: cssVar('--secondary-color', '#1e6b68'),
+            success: cssVar('--success-color', '#059669'),
+            warning: cssVar('--warning-color', '#d97706'),
+            danger: cssVar('--danger-color', '#dc2626'),
+            info: cssVar('--info-color', '#0284c7'),
+            text: cssVar('--text-main', '#0f172a'),
+            muted: cssVar('--text-muted', '#64748b'),
+            grid: cssVar('--border-color', '#e2e8f0'),
+            card: cssVar('--bg-card', '#ffffff')
+        };
+    }
+
+    function formatDayLabel(iso) {
+        const date = new Date(String(iso) + 'T00:00:00');
+        if (isNaN(date.getTime())) return String(iso);
+        return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+    }
+
+    function tooltipStyle(palette) {
+        return {
+            backgroundColor: palette.card,
+            titleColor: palette.text,
+            bodyColor: palette.muted,
+            borderColor: palette.grid,
+            borderWidth: 1,
+            padding: 10,
+            cornerRadius: 8,
+            boxPadding: 4,
+            titleFont: { weight: '600' }
+        };
+    }
+
+    function cartesianOptions(palette, opts = {}) {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    display: opts.legend !== false,
+                    position: 'top',
+                    align: 'end',
+                    labels: {
+                        color: palette.muted,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        boxWidth: 8,
+                        boxHeight: 8,
+                        padding: 14,
+                        font: { size: 11 }
+                    }
+                },
+                tooltip: tooltipStyle(palette)
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    border: { color: palette.grid },
+                    ticks: {
+                        color: palette.muted,
+                        maxRotation: 0,
+                        autoSkip: true,
+                        maxTicksLimit: opts.maxTicks || 8,
+                        font: { size: 11 }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: palette.grid },
+                    border: { display: false },
+                    ticks: {
+                        color: palette.muted,
+                        precision: opts.integer ? 0 : undefined,
+                        callback: opts.yTick || undefined,
+                        font: { size: 11 }
+                    }
+                }
+            }
+        };
+    }
+
+    function doughnutOptions(palette) {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '62%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: palette.muted,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        boxWidth: 8,
+                        boxHeight: 8,
+                        padding: 14,
+                        font: { size: 11 }
+                    }
+                },
+                tooltip: tooltipStyle(palette)
+            }
+        };
+    }
+
+    function setChartEmpty(canvasId, isEmpty) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const wrap = canvas.closest('.chart-canvas-wrap');
+        const overlay = wrap ? wrap.querySelector('.chart-empty') : null;
+        if (overlay) overlay.hidden = !isEmpty;
+    }
+
+    function destroyCharts() {
+        Object.keys(chartInstances).forEach(id => {
+            try {
+                chartInstances[id].destroy();
+            } catch (_e) { /* ignore */ }
+            delete chartInstances[id];
+        });
+    }
+
+    function toEntries(obj, order, colorMap, palette) {
+        const source = obj || {};
+        const keys = (order && order.length ? order : Object.keys(source)).filter(key => Number(source[key] || 0) > 0);
+        return keys.map(key => ({
+            label: key,
+            value: Number(source[key] || 0),
+            color: (colorMap && colorMap[key]) || palette.info
+        }));
+    }
+
+    function renderCharts(data) {
+        if (typeof window.Chart === 'undefined') {
+            if (chartsStatus) {
+                chartsStatus.hidden = false;
+                chartsStatus.classList.add('is-error');
+                chartsStatus.textContent = 'Chart.js n\'a pas pu être chargé : les graphiques sont indisponibles.';
+            }
+            return;
+        }
+
+        destroyCharts();
+
+        const palette = chartPalette();
+        const labels = (data.labels || []).map(formatDayLabel);
+        const total = arr => (arr || []).reduce((sum, value) => sum + Number(value || 0), 0);
+
+        Chart.defaults.font.family = "'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        Chart.defaults.color = palette.muted;
+
+        // 1. Activité quotidienne (courbes)
+        const activite = data.activite || {};
+        const activiteEmpty = total(activite.consultations) === 0 && total(activite.rendezvous) === 0;
+        setChartEmpty('chart-activite', activiteEmpty);
+        if (!activiteEmpty) {
+            chartInstances['chart-activite'] = new Chart(document.getElementById('chart-activite'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Consultations',
+                            data: activite.consultations || [],
+                            borderColor: palette.success,
+                            backgroundColor: withAlpha(palette.success, 0.14),
+                            pointBackgroundColor: palette.success,
+                            tension: 0.35,
+                            fill: true,
+                            borderWidth: 2,
+                            pointRadius: 2,
+                            pointHoverRadius: 4
+                        },
+                        {
+                            label: 'Demandes de RDV',
+                            data: activite.rendezvous || [],
+                            borderColor: palette.info,
+                            backgroundColor: withAlpha(palette.info, 0.10),
+                            pointBackgroundColor: palette.info,
+                            tension: 0.35,
+                            fill: true,
+                            borderWidth: 2,
+                            pointRadius: 2,
+                            pointHoverRadius: 4
+                        }
+                    ]
+                },
+                options: cartesianOptions(palette, { integer: true })
+            });
+        }
+
+        // 2. Encaissements journaliers (barres)
+        const revenusEmpty = total(data.revenus) === 0;
+        setChartEmpty('chart-revenus', revenusEmpty);
+        if (!revenusEmpty) {
+            const options = cartesianOptions(palette, {
+                legend: false,
+                integer: false,
+                maxTicks: 10,
+                yTick: value => nfCompact.format(value)
+            });
+            options.plugins.tooltip.callbacks = {
+                label: context => `${nfFC.format(context.parsed.y)} FC`
+            };
+            chartInstances['chart-revenus'] = new Chart(document.getElementById('chart-revenus'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Encaissements',
+                        data: data.revenus || [],
+                        backgroundColor: withAlpha(palette.primary, 0.72),
+                        hoverBackgroundColor: palette.primary,
+                        borderRadius: 6,
+                        maxBarThickness: 38
+                    }]
+                },
+                options
+            });
+        }
+
+        // 3. Rendez-vous par statut
+        const rdvEntries = toEntries(data.rdv_statuts, ['En attente', 'À payer', 'Confirmé', 'Terminé', 'Planifié', 'Annulé'], {
+            'En attente': palette.warning,
+            'À payer': palette.info,
+            'Confirmé': palette.success,
+            'Terminé': palette.primary,
+            'Planifié': palette.secondary,
+            'Annulé': palette.danger
+        }, palette);
+        const rdvEmpty = rdvEntries.length === 0;
+        setChartEmpty('chart-rdv-statuts', rdvEmpty);
+        if (!rdvEmpty) {
+            const options = doughnutOptions(palette);
+            options.plugins.tooltip.callbacks = {
+                label: context => {
+                    const value = Number(context.parsed || 0);
+                    const sum = rdvEntries.reduce((acc, entry) => acc + entry.value, 0) || 1;
+                    return `${context.label} : ${value} (${Math.round((value / sum) * 100)}%)`;
+                }
+            };
+            chartInstances['chart-rdv-statuts'] = new Chart(document.getElementById('chart-rdv-statuts'), {
+                type: 'doughnut',
+                data: {
+                    labels: rdvEntries.map(entry => entry.label),
+                    datasets: [{
+                        data: rdvEntries.map(entry => entry.value),
+                        backgroundColor: rdvEntries.map(entry => entry.color),
+                        borderColor: palette.card,
+                        borderWidth: 2,
+                        hoverOffset: 6
+                    }]
+                },
+                options
+            });
+        }
+
+        // 4. Examens par statut
+        const examEntries = toEntries(data.examens_statuts, ['En attente', 'En cours', 'Termine'], {
+            'En attente': palette.warning,
+            'En cours': palette.info,
+            'Termine': palette.success
+        }, palette);
+        const examEmpty = examEntries.length === 0;
+        setChartEmpty('chart-examens-statuts', examEmpty);
+        if (!examEmpty) {
+            const options = doughnutOptions(palette);
+            options.plugins.tooltip.callbacks = {
+                label: context => {
+                    const value = Number(context.parsed || 0);
+                    const sum = examEntries.reduce((acc, entry) => acc + entry.value, 0) || 1;
+                    return `${context.label} : ${value} (${Math.round((value / sum) * 100)}%)`;
+                }
+            };
+            chartInstances['chart-examens-statuts'] = new Chart(document.getElementById('chart-examens-statuts'), {
+                type: 'doughnut',
+                data: {
+                    labels: examEntries.map(entry => entry.label === 'Termine' ? 'Terminé' : entry.label),
+                    datasets: [{
+                        data: examEntries.map(entry => entry.value),
+                        backgroundColor: examEntries.map(entry => entry.color),
+                        borderColor: palette.card,
+                        borderWidth: 2,
+                        hoverOffset: 6
+                    }]
+                },
+                options
+            });
+        }
+
+        // 5. Top médecins (barres horizontales)
+        const top = data.top_medecins || {};
+        const topLabels = top.labels || [];
+        const topEmpty = topLabels.length === 0;
+        setChartEmpty('chart-top-medecins', topEmpty);
+        if (!topEmpty) {
+            const options = cartesianOptions(palette, {
+                legend: false,
+                integer: true,
+                maxTicks: 5
+            });
+            options.indexAxis = 'y';
+            options.interaction = { mode: 'nearest', intersect: true };
+            options.scales.x.grid = { color: palette.grid };
+            options.scales.x.border = { display: false };
+            options.scales.y.grid = { display: false };
+            options.scales.y.border = { color: palette.grid };
+            options.scales.y.ticks.autoSkip = false;
+            chartInstances['chart-top-medecins'] = new Chart(document.getElementById('chart-top-medecins'), {
+                type: 'bar',
+                data: {
+                    labels: topLabels,
+                    datasets: [{
+                        label: 'Consultations',
+                        data: top.data || [],
+                        backgroundColor: withAlpha(palette.secondary, 0.8),
+                        hoverBackgroundColor: palette.secondary,
+                        borderRadius: 6,
+                        maxBarThickness: 26
+                    }]
+                },
+                options
+            });
+        }
+
+        // 6. Moyens de paiement
+        const methodEntries = toEntries(data.paiements_methodes, ['Espèces', 'Carte', 'Mobile Money', 'Assurance'], {
+            'Espèces': palette.success,
+            'Carte': palette.info,
+            'Mobile Money': palette.warning,
+            'Assurance': palette.primary
+        }, palette);
+        const methodEmpty = methodEntries.length === 0;
+        setChartEmpty('chart-paiements-methodes', methodEmpty);
+        if (!methodEmpty) {
+            const options = doughnutOptions(palette);
+            options.plugins.tooltip.callbacks = {
+                label: context => `${context.label} : ${nfFC.format(Number(context.parsed || 0))} FC`
+            };
+            chartInstances['chart-paiements-methodes'] = new Chart(document.getElementById('chart-paiements-methodes'), {
+                type: 'doughnut',
+                data: {
+                    labels: methodEntries.map(entry => entry.label),
+                    datasets: [{
+                        data: methodEntries.map(entry => entry.value),
+                        backgroundColor: methodEntries.map(entry => entry.color),
+                        borderColor: palette.card,
+                        borderWidth: 2,
+                        hoverOffset: 6
+                    }]
+                },
+                options
+            });
+        }
+    }
+
+    function loadChartStats(days) {
+        currentPeriod = Number(days) || currentPeriod;
+        const requestId = ++chartRequestId;
+        if (chartsStatus) {
+            chartsStatus.hidden = false;
+            chartsStatus.classList.remove('is-error');
+            chartsStatus.textContent = 'Chargement des graphiques…';
+        }
+
+        ApiClient.request(`/stats/charts?days=${currentPeriod}`, 'GET')
+            .then(data => {
+                if (requestId !== chartRequestId) return;
+                if (!data || data.status === 'error') {
+                    throw new Error((data && data.message) || 'Données indisponibles.');
+                }
+                chartsData = data;
+                renderCharts(data);
+                if (chartsStatus) chartsStatus.hidden = true;
+            })
+            .catch(error => {
+                if (requestId !== chartRequestId) return;
+                if (chartsStatus) {
+                    chartsStatus.hidden = false;
+                    chartsStatus.classList.add('is-error');
+                    chartsStatus.textContent = 'Impossible de charger les graphiques : ' + error.message;
+                }
+            });
+    }
+
+    if (periodSelect) {
+        periodSelect.addEventListener('change', () => loadChartStats(periodSelect.value));
+    }
+
+    // Re-rendre les graphiques quand le thème clair/sombre change.
+    const themeObserver = new MutationObserver(() => {
+        if (chartsData) renderCharts(chartsData);
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
 
     // 5. Gestion du Personnel
     function loadStaff() {
@@ -317,22 +749,16 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(err => showToast("Erreur : " + err.message, "danger"));
     });
 
-    // Polling notifications
-    setInterval(() => {
-        ApiClient.request('/notifications', 'GET')
-            .then(data => {
-                if (data && data.length > 0) {
-                    data.forEach(notif => {
-                        showToast(notif.message, "info");
-                        ApiClient.request(`/notifications/${notif.id}/read`, 'POST');
-                    });
-                    if (viewMessages.style.display === 'block') loadMessages();
-                }
-            })
-            .catch(() => {});
-    }, 30000);
+    // Les notifications sont gérées par js/notifications.js (cloche + polling).
+    // On rafraîchit simplement les données visibles quand une alerte arrive.
+    document.addEventListener('hospira:notification', () => {
+        if (viewMessages.style.display === 'block') loadMessages();
+        loadDashboardStats();
+        if (viewDashboard.style.display !== 'none') loadChartStats(currentPeriod);
+    });
 
     loadDashboardStats();
+    loadChartStats(currentPeriod);
 
     function showToast(message, type = "success") {
         const container = document.getElementById('toast-container');

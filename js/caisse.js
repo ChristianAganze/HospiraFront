@@ -193,6 +193,13 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchTarif().then(() => loadFactures());
     loadExamensCaisse();
 
+    // Les notifications (paiements, nouveaux examens, résultats) sont gérées
+    // par js/notifications.js ; on rafraîchit les files visibles à leur arrivée.
+    document.addEventListener('hospira:notification', () => {
+        loadFactures();
+        loadExamensCaisse();
+    });
+
     window.showToast = function(message, type = "success") {
         const container = document.getElementById('toast-container');
         if (!container) return;

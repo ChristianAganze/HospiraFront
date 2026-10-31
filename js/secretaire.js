@@ -288,15 +288,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadRendezvous();
     loadPatients();
 
-    setInterval(() => {
-        ApiClient.request('/notifications', 'GET').then(data => {
-            if(data && data.length > 0) {
-                data.forEach(notif => {
-                    showToast(notif.message, "info");
-                    ApiClient.request(`/notifications/${notif.id}/read`, 'POST');
-                });
-                loadRendezvous();
-            }
-        }).catch(() => {});
-    }, 30000);
+    // Les notifications sont gérées par js/notifications.js (cloche + polling).
+    document.addEventListener('hospira:notification', () => {
+        loadRendezvous();
+    });
 });
