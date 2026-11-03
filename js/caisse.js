@@ -150,47 +150,195 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!tbody) return;
         ApiClient.request('/prescriptions-examens?statut_paiement=Non paye', 'GET')
             .then(data => {
-                if (data && data.prescriptions && data.prescriptions.length > 0) {
-                    tbody.innerHTML = '';
-                    data.prescriptions.forEach(item => {
-                        const tr = document.createElement('tr');
-                        tr.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
-                        tr.innerHTML = `
-                            <td style="padding: 1rem 0.5rem; font-weight: 500;">${escapeHtml(item.patient_prenom)} ${escapeHtml(item.patient_nom)}</td>
-                            <td style="padding: 1rem 0.5rem;"><strong>${escapeHtml(item.examen_nom)}</strong><br><small style="color: var(--text-muted);">${escapeHtml(item.examen_desc || '')}</small></td>
-                            <td style="padding: 1rem 0.5rem;">Dr. ${escapeHtml(item.medecin_prenom)} ${escapeHtml(item.medecin_nom)}</td>
-                            <td style="padding: 1rem 0.5rem; font-weight: bold; color: var(--success-color);">${escapeHtml(item.examen_prix)} FC</td>
-                            <td style="padding: 1rem 0.5rem;"><button class="btn btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Encaisser & Générer Ticket Labo</button></td>
-                        `;
-                        tr.querySelector('button').addEventListener('click', () => payerExamenCaisse([item.id], `${item.patient_prenom} ${item.patient_nom}`, item.examen_nom, item.examen_prix));
-                        tbody.appendChild(tr);
-                    });
-                } else {
+                const prescriptions = (data && data.prescriptions) ? data.prescriptions : [];
+                if (prescriptions.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding: 1.5rem;">Aucun examen en attente de paiement.</td></tr>';
+                    return;
                 }
+
+                // Grouper par patient
+                const parPatient = {};
+                prescriptions.forEach(item => {
+                    const pid = item.patient_id;
+                    if (!parPatient[pid]) {
+                        parPatient[pid] = {
+                            patient_id: pid,
+                            patient_nom: item.patient_nom,
+                            patient_prenom: item.patient_prenom,
+                            patient_iup: item.patient_iup,
+                            medecin_nom: item.medecin_nom,
+                            medecin_prenom: item.medecin_prenom,
+                            items: []
+                        };
+                    }
+                    parPatient[pid].items.push(item);
+                });
+
+                tbody.innerHTML = '';
+                Object.values(parPatient).forEach(groupe => {
+                    const patientLabel = `${groupe.patient_prenom} ${groupe.patient_nom}`.trim();
+                    const iupLabel = groupe.patient_iup ? ` (${groupe.patient_iup})` : '';
+                    const medecinLabel = `Dr. ${groupe.medecin_prenom} ${groupe.medecin_nom}`.trim();
+
+                    // Ligne entête du patient
+                    const trHeader = document.createElement('tr');
+                    trHeader.style.background = 'var(--bg-main, #f8f9fa)';
+                    trHeader.style.borderTop = '2px solid var(--border-color, #e0e0e0)';
+                    trHeader.innerHTML = `
+                        <td colspan="3" style="padding: 0.75rem 0.5rem; font-weight: 600; color: var(--primary-color);">
+                            👤 ${escapeHtml(patientLabel)} <span style="font-size:0.8rem; font-weight:normal; color:var(--text-muted);">${escapeHtml(iupLabel)}</span>
+                            <span style="margin-left: 1rem; font-weight: normal; font-size: 0.85rem; color: var(--text-muted);">Prescrit par ${escapeHtml(medecinLabel)}</span>
+                        </td>
+                        <td colspan="2" style="padding: 0.75rem 0.5rem; text-align: right;">
+                            <label style="font-size: 0.8rem; cursor: pointer; user-select: none;">
+                                <input type="checkbox" class="toggle-all-patient" data-patient="${groupe.patient_id}" checked style="margin-right: 4px; vertical-align: middle;">
+                                Tout sélectionner
+                            </label>
+                        </td>
+                    `;
+                    tbody.appendChild(trHeader);
+
+                    // Lignes d'examens individuels avec cases à cocher
+                    groupe.items.forEach(item => {
+                        const trItem = document.createElement('tr');
+                        trItem.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
+                        const prixNum = Number(item.examen_prix) || 0;
+                        trItem.innerHTML = `
+                            <td style="padding: 0.6rem 0.5rem 0.6rem 1.5rem;">
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                    <input type="checkbox" class="examen-check examen-check-${groupe.patient_id}" 
+                                           data-patient="${groupe.patient_id}"
+                                           data-id="${item.id}"
+                                           data-nom="${escapeHtml(item.examen_nom)}"
+                                           data-prix="${prixNum}"
+                                           checked>
+                                    <span><strong>${escapeHtml(item.examen_nom)}</strong></span>
+                                </label>
+                            </td>
+                            <td colspan="2" style="padding: 0.6rem 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                                ${escapeHtml(item.examen_desc || 'Examen de laboratoire')}
+                            </td>
+                            <td style="padding: 0.6rem 0.5rem; font-weight: bold; color: var(--success-color);">
+                                ${prixNum.toLocaleString('fr-FR')} FC
+                            </td>
+                            <td style="padding: 0.6rem 0.5rem; color: var(--text-muted); font-size: 0.8rem;">
+                                En attente
+                            </td>
+                        `;
+                        tbody.appendChild(trItem);
+                    });
+
+                    // Ligne de validation pour ce patient
+                    const trFooter = document.createElement('tr');
+                    trFooter.style.borderBottom = '2px solid var(--border-color, #e0e0e0)';
+                    trFooter.style.background = 'rgba(0,0,0,0.02)';
+                    trFooter.innerHTML = `
+                        <td colspan="3" style="padding: 0.75rem 0.5rem 0.75rem 1.5rem; font-weight: 500;">
+                            Total sélectionné : <span id="total-patient-${groupe.patient_id}" style="font-weight: bold; color: var(--primary-color);">0 FC</span>
+                            <span id="count-patient-${groupe.patient_id}" style="font-size: 0.8rem; color: var(--text-muted); margin-left: 8px;"></span>
+                        </td>
+                        <td colspan="2" style="padding: 0.75rem 0.5rem; text-align: right;">
+                            <button class="btn btn-primary btn-encaisser-patient" id="btn-encaisser-${groupe.patient_id}" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                                💳 Encaisser & Générer Ticket Labo
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(trFooter);
+
+                    // Recalcul du total dynamique pour ce patient
+                    function recalculerTotalPatient() {
+                        const checks = tbody.querySelectorAll(`.examen-check-${groupe.patient_id}:checked`);
+                        let sum = 0;
+                        const ids = [];
+                        const noms = [];
+                        checks.forEach(chk => {
+                            sum += Number(chk.dataset.prix) || 0;
+                            ids.push(Number(chk.dataset.id));
+                            noms.push(chk.dataset.nom);
+                        });
+                        const totalEl = document.getElementById(`total-patient-${groupe.patient_id}`);
+                        const countEl = document.getElementById(`count-patient-${groupe.patient_id}`);
+                        const btn = document.getElementById(`btn-encaisser-${groupe.patient_id}`);
+                        if (totalEl) totalEl.textContent = `${sum.toLocaleString('fr-FR')} FC`;
+                        if (countEl) countEl.textContent = `(${ids.length} sur ${groupe.items.length} examen${groupe.items.length > 1 ? 's' : ''})`;
+                        if (btn) {
+                            btn.disabled = ids.length === 0;
+                            btn.style.opacity = ids.length === 0 ? '0.5' : '1';
+                        }
+                        return { sum, ids, noms };
+                    }
+
+                    // Écouter les changements de case
+                    const checkboxes = tbody.querySelectorAll(`.examen-check-${groupe.patient_id}`);
+                    checkboxes.forEach(chk => {
+                        chk.addEventListener('change', () => {
+                            const allChk = tbody.querySelectorAll(`.examen-check-${groupe.patient_id}`);
+                            const checkedChk = tbody.querySelectorAll(`.examen-check-${groupe.patient_id}:checked`);
+                            const toggleAll = trHeader.querySelector(`.toggle-all-patient`);
+                            if (toggleAll) toggleAll.checked = (allChk.length === checkedChk.length);
+                            recalculerTotalPatient();
+                        });
+                    });
+
+                    // Écouter le "Tout sélectionner"
+                    const toggleAll = trHeader.querySelector(`.toggle-all-patient`);
+                    if (toggleAll) {
+                        toggleAll.addEventListener('change', (e) => {
+                            checkboxes.forEach(chk => { chk.checked = e.target.checked; });
+                            recalculerTotalPatient();
+                        });
+                    }
+
+                    // Bouton Encaisser
+                    const btnEncaisser = trFooter.querySelector(`#btn-encaisser-${groupe.patient_id}`);
+                    if (btnEncaisser) {
+                        btnEncaisser.addEventListener('click', () => {
+                            const { sum, ids, noms } = recalculerTotalPatient();
+                            if (ids.length === 0) {
+                                showToast("Veuillez sélectionner au moins un examen à payer.", "warning");
+                                return;
+                            }
+                            if (!confirm(`Confirmer l'encaissement de ${sum.toLocaleString('fr-FR')} FC pour ${ids.length} examen(s) de ${patientLabel} ?`)) return;
+
+                            btnEncaisser.disabled = true;
+                            ApiClient.request('/labo/payer-examens', 'POST', { prescription_ids: ids })
+                                .then(res => {
+                                    showToast(`Paiement validé ! Ticket attribué : ${res.ticket_labo}`, "success");
+                                    loadExamensCaisse();
+                                    document.getElementById('recu-ref').textContent = res.ticket_labo;
+                                    document.getElementById('recu-patient').textContent = patientLabel;
+                                    document.getElementById('recu-date').textContent = new Date().toLocaleString('fr-FR');
+                                    document.getElementById('recu-motif').textContent = `Examens Labo: ${noms.join(', ')}`;
+                                    document.getElementById('recu-montant').textContent = sum.toLocaleString('fr-FR');
+                                    document.getElementById('modal-recu').style.display = 'flex';
+                                })
+                                .catch(err => {
+                                    btnEncaisser.disabled = false;
+                                    showToast("Erreur lors de l'encaissement : " + err.message, "danger");
+                                });
+                        });
+                    }
+
+                    // Calcul initial
+                    recalculerTotalPatient();
+                });
             })
             .catch(err => {
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger" style="padding: 1.5rem;">Erreur : ${escapeHtml(err.message)}</td></tr>`;
             });
     }
 
+    // Compatibilité
     window.payerExamenCaisse = function(prescriptionIds, patientName, examenNom, prix) {
-        if (!confirm(`Confirmer le paiement de ${prix} FC pour l'examen "${examenNom}" de ${patientName} ?`)) return;
         ApiClient.request('/labo/payer-examens', 'POST', { prescription_ids: prescriptionIds })
             .then(res => {
                 showToast(`Paiement validé ! Ticket attribué : ${res.ticket_labo}`, "success");
                 loadExamensCaisse();
-                document.getElementById('recu-ref').textContent = res.ticket_labo;
-                document.getElementById('recu-patient').textContent = patientName;
-                document.getElementById('recu-date').textContent = new Date().toLocaleString('fr-FR');
-                document.getElementById('recu-motif').textContent = `Examen Labo: ${examenNom}`;
-                document.getElementById('recu-montant').textContent = prix;
-                document.getElementById('modal-recu').style.display = 'flex';
             })
-            .catch(err => showToast("Erreur lors de l'encaissement : " + err.message, "danger"));
+            .catch(err => showToast("Erreur : " + err.message, "danger"));
     };
 
-    fetchTarif().then(() => loadFactures());
+        fetchTarif().then(() => loadFactures());
     loadExamensCaisse();
 
     // Les notifications (paiements, nouveaux examens, résultats) sont gérées

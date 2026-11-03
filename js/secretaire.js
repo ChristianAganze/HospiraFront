@@ -140,53 +140,158 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    let allRendezvousList = [];
+    let currentRdvFilter = 'en_attente';
+
+    // Gestion des onglets de tri des rendez-vous
+    document.querySelectorAll('.rdv-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.rdv-filter-btn').forEach(b => {
+                b.classList.remove('active');
+                b.style.background = '';
+                b.style.color = '';
+            });
+            btn.classList.add('active');
+            btn.style.background = 'var(--primary-color)';
+            btn.style.color = 'white';
+            currentRdvFilter = btn.dataset.filter;
+            renderRendezvousTable();
+        });
+    });
+
     function loadRendezvous() {
         ApiClient.request('/rendezvous', 'GET')
             .then(res => {
-                const rdvs = (res && res.records) ? res.records : (Array.isArray(res) ? res : []);
-                const tbody = document.getElementById('rdv-table-body');
-                tbody.innerHTML = '';
-                if (rdvs.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding: 2rem;">Aucun rendez-vous.</td></tr>';
-                    return;
-                }
-                rdvs.sort((a, b) => {
-                    if(a.statut === 'En attente' && b.statut !== 'En attente') return -1;
-                    if(a.statut !== 'En attente' && b.statut === 'En attente') return 1;
-                    return new Date(b.date_heure) - new Date(a.date_heure);
-                });
-                rdvs.forEach(rdv => {
-                    const dateObj = new Date(rdv.date_heure);
-                    const isToday = dateObj.toDateString() === new Date().toDateString();
-                    const dateStr = isToday ? "Aujourd'hui" : dateObj.toLocaleDateString('fr-FR');
-                    const patientPrenom = rdv.patient ? rdv.patient.prenom : (rdv.patient_prenom || '');
-                    const patientNom = rdv.patient ? rdv.patient.nom : (rdv.patient_nom || '');
-                    const medecinNom = rdv.medecin ? rdv.medecin.nom : (rdv.medecin_nom || '');
-                    const medecinPrenom = rdv.medecin ? rdv.medecin.prenom : (rdv.medecin_prenom || '');
-                    const medecinSpecialite = rdv.medecin ? rdv.medecin.specialite : (rdv.medecin_specialite || null);
-                    const hasPreuve = rdv.preuve_paiement_path ? `<br><span class="badge badge-info" style="font-size:0.7rem;">Reçu Joint</span>` : '';
-                    let statutBadge = `<span class="badge badge-neutral">En attente</span>${hasPreuve}`;
-                    let actionBtn = `<button class="btn btn-primary" onclick="openValiderModal(${Number(rdv.id)}, '${escapeHtml(rdv.preuve_paiement_path || '')}', ${rdv.medecin ? Number(rdv.medecin.id) : 'null'})" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Affecter & Valider</button>`;
-                    if(rdv.statut === 'À payer') { statutBadge = `<span class="badge badge-warning">À payer</span>${hasPreuve}`; actionBtn = `-`; }
-                    else if(rdv.statut === 'Confirmé') { statutBadge = `<span class="badge badge-success">Confirmé</span>${hasPreuve}`; actionBtn = `-`; }
-                    else if(rdv.statut === 'Annulé') { statutBadge = `<span class="badge badge-danger">Annulé</span>`; actionBtn = `-`; }
-                    else if(rdv.statut === 'Terminé') { statutBadge = `<span class="badge badge-info">Terminé</span>`; actionBtn = `-`; }
-
-                    const tr = document.createElement('tr');
-                    tr.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
-                    tr.innerHTML = `
-                        <td style="padding: 1rem 0.5rem; font-weight:500;">${escapeHtml(dateStr)} <br><small style="color:var(--text-muted); font-weight:normal;">${statutBadge}</small></td>
-                        <td style="padding: 1rem 0.5rem;">${escapeHtml(patientPrenom)} ${escapeHtml(patientNom)}</td>
-                        <td style="padding: 1rem 0.5rem;">${medecinNom ? 'Dr. ' + escapeHtml(medecinPrenom) + ' ' + escapeHtml(medecinNom) + (medecinSpecialite ? ' <small style="color:var(--text-muted);">(' + escapeHtml(medecinSpecialite) + ')</small>' : '') : '<span style="background:rgba(245,158,11,0.12); color:#b45309; padding:4px 12px; border-radius:20px; font-weight:600; font-size:0.85rem;">À affecter</span>'}</td>
-                        <td style="padding: 1rem 0.5rem; color: var(--text-muted);">${escapeHtml(rdv.motif || '-')}</td>
-                        <td style="padding: 1rem 0.5rem;">${actionBtn}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+                allRendezvousList = (res && res.records) ? res.records : (Array.isArray(res) ? res : []);
+                updateRdvBadges();
+                renderRendezvousTable();
             })
             .catch(error => {
                 document.getElementById('rdv-table-body').innerHTML = `<tr><td colspan="5" class="text-center text-danger">Erreur: ${escapeHtml(error.message)}</td></tr>`;
             });
+    }
+
+    function updateRdvBadges() {
+        const todayStr = new Date().toDateString();
+        const enAttenteCount = allRendezvousList.filter(r => r.statut === 'En attente' || (!r.medecin && !r.medecin_id)).length;
+        const affectesCount = allRendezvousList.filter(r => (r.statut === 'Confirmé' || r.statut === 'À payer' || r.statut === 'En attente examens') && (r.medecin || r.medecin_id)).length;
+        const todayCount = allRendezvousList.filter(r => new Date(r.date_heure).toDateString() === todayStr).length;
+
+        const bWait = document.getElementById('badge-rdv-en-attente');
+        const bAff = document.getElementById('badge-rdv-affectes');
+        const bToday = document.getElementById('badge-rdv-today');
+        const bAll = document.getElementById('badge-rdv-tous');
+
+        if (bWait) bWait.textContent = enAttenteCount;
+        if (bAff) bAff.textContent = affectesCount;
+        if (bToday) bToday.textContent = todayCount;
+        if (bAll) bAll.textContent = allRendezvousList.length;
+    }
+
+    function renderRendezvousTable() {
+        const tbody = document.getElementById('rdv-table-body');
+        tbody.innerHTML = '';
+
+        const todayStr = new Date().toDateString();
+        let filtered = allRendezvousList.slice();
+
+        if (currentRdvFilter === 'en_attente') {
+            filtered = filtered.filter(r => r.statut === 'En attente' || (!r.medecin && !r.medecin_id));
+        } else if (currentRdvFilter === 'affectes') {
+            filtered = filtered.filter(r => (r.statut === 'Confirmé' || r.statut === 'À payer' || r.statut === 'En attente examens') && (r.medecin || r.medecin_id));
+        } else if (currentRdvFilter === 'aujourdhui') {
+            filtered = filtered.filter(r => new Date(r.date_heure).toDateString() === todayStr);
+        }
+
+        if (filtered.length === 0) {
+            const msgs = {
+                'en_attente': 'Aucun rendez-vous en attente de validation ou d\'affectation.',
+                'affectes': 'Aucun rendez-vous actuellement affecté.',
+                'aujourdhui': 'Aucun rendez-vous prévu pour aujourd\'hui.',
+                'tous': 'Aucun rendez-vous enregistré.'
+            };
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding: 2.5rem;">${msgs[currentRdvFilter] || 'Aucun rendez-vous.'}</td></tr>`;
+            return;
+        }
+
+        filtered.sort((a, b) => {
+            if (a.statut === 'En attente' && b.statut !== 'En attente') return -1;
+            if (a.statut !== 'En attente' && b.statut === 'En attente') return 1;
+            return new Date(b.date_heure) - new Date(a.date_heure);
+        });
+
+        filtered.forEach(rdv => {
+            const dateObj = new Date(rdv.date_heure);
+            const isToday = dateObj.toDateString() === todayStr;
+            const dateStr = isToday ? "Aujourd'hui " + dateObj.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : dateObj.toLocaleDateString('fr-FR') + ' ' + dateObj.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+            const patientPrenom = rdv.patient ? rdv.patient.prenom : (rdv.patient_prenom || '');
+            const patientNom = rdv.patient ? rdv.patient.nom : (rdv.patient_nom || '');
+            const patientLabel = `${patientPrenom} ${patientNom}`.trim();
+            const medecinNom = rdv.medecin ? rdv.medecin.nom : (rdv.medecin_nom || '');
+            const medecinPrenom = rdv.medecin ? rdv.medecin.prenom : (rdv.medecin_prenom || '');
+            const medecinSpecialite = rdv.medecin ? rdv.medecin.specialite : (rdv.medecin_specialite || null);
+            const hasPreuve = rdv.preuve_paiement_path ? `<br><span class="badge badge-info" style="font-size:0.7rem;">Reçu Joint</span>` : '';
+            
+            let statutBadge = `<span class="badge badge-neutral">En attente</span>${hasPreuve}`;
+            if (rdv.statut === 'À payer') statutBadge = `<span class="badge badge-warning">À payer</span>${hasPreuve}`;
+            else if (rdv.statut === 'Confirmé') statutBadge = `<span class="badge badge-success">Confirmé</span>${hasPreuve}`;
+            else if (rdv.statut === 'Annulé') statutBadge = `<span class="badge badge-danger">Annulé</span>`;
+            else if (rdv.statut === 'Terminé') statutBadge = `<span class="badge badge-info">Terminé</span>`;
+
+            // Actions selon le statut
+            let actionsHtml = '';
+
+            if (rdv.statut === 'En attente' || (!rdv.medecin && !rdv.medecin_id)) {
+                actionsHtml = `
+                    <div style="display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
+                        <button class="btn btn-primary" onclick="openValiderModal(${Number(rdv.id)}, '${escapeHtml(rdv.preuve_paiement_path || '')}', ${rdv.medecin ? Number(rdv.medecin.id) : 'null'})" style="padding: 0.35rem 0.7rem; font-size: 0.82rem; font-weight:600;">
+                            👉 Affecter & Valider
+                        </button>
+                        <button class="btn btn-secondary" onclick="openReporterModal(${Number(rdv.id)}, '${escapeHtml(patientLabel)}', '${rdv.date_heure}')" title="Reporter la date" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;">
+                            🕒 Reporter
+                        </button>
+                        <button class="btn btn-danger" onclick="annulerRdv(${Number(rdv.id)})" title="Annuler le rendez-vous" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;">
+                            ✕
+                        </button>
+                    </div>
+                `;
+            } else if (rdv.statut === 'Confirmé' || rdv.statut === 'À payer') {
+                const hasConst = rdv.constantes && (rdv.constantes.poids || rdv.constantes.tension || rdv.constantes.temperature);
+                const constBtn = hasConst
+                    ? `<button class="btn" onclick="openConstantesModal(${Number(rdv.id)}, '${escapeHtml(patientLabel)}', '${escapeHtml(rdv.numero_passage || '')}', ${escapeHtml(JSON.stringify(rdv.constantes))})" style="padding: 0.3rem 0.5rem; font-size: 0.75rem; background: rgba(16,185,129,0.12); color: #047857; border: 1px solid rgba(16,185,129,0.4);" title="Constantes enregistrées - Cliquer pour modifier">🩺 ${escapeHtml(rdv.constantes.tension || rdv.constantes.poids + 'kg')}</button>`
+                    : `<button class="btn btn-primary" onclick="openConstantesModal(${Number(rdv.id)}, '${escapeHtml(patientLabel)}', '${escapeHtml(rdv.numero_passage || '')}')" style="padding: 0.3rem 0.5rem; font-size: 0.75rem;" title="Prendre le poids, tension, température">🩺 Constantes</button>`;
+
+                actionsHtml = `
+                    <div style="display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
+                        ${constBtn}
+                        <button class="btn btn-secondary" onclick="openReassignerModal(${Number(rdv.id)}, '${escapeHtml(patientLabel)}', ${rdv.medecin ? Number(rdv.medecin.id) : 'null'})" title="Réaffecter à un autre médecin (indisponibilité)" style="padding: 0.3rem 0.5rem; font-size: 0.75rem;">
+                            🔄 Réassigner
+                        </button>
+                        <button class="btn btn-secondary" onclick="openReporterModal(${Number(rdv.id)}, '${escapeHtml(patientLabel)}', '${rdv.date_heure}')" title="Reporter la date" style="padding: 0.3rem 0.5rem; font-size: 0.75rem;">
+                            🕒 Reporter
+                        </button>
+                        <button class="btn btn-danger" onclick="annulerRdv(${Number(rdv.id)})" title="Annuler le rendez-vous" style="padding: 0.3rem 0.5rem; font-size: 0.75rem;">
+                            ✕
+                        </button>
+                    </div>
+                `;
+            } else {
+                actionsHtml = `<span style="color:var(--text-muted); font-size:0.8rem;">-</span>`;
+            }
+
+            const ticketBadge = rdv.numero_passage ? `<span style="font-size:0.75rem; color:var(--primary-color); font-weight:600; display:block;">Ticket #${escapeHtml(rdv.numero_passage)}</span>` : '';
+
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
+            tr.innerHTML = `
+                <td style="padding: 1rem 0.5rem; font-weight:500;">${escapeHtml(dateStr)} ${ticketBadge}<small style="color:var(--text-muted); font-weight:normal;">${statutBadge}</small></td>
+                <td style="padding: 1rem 0.5rem; font-weight:500;">${escapeHtml(patientLabel)}</td>
+                <td style="padding: 1rem 0.5rem;">${medecinNom ? 'Dr. ' + escapeHtml(medecinPrenom) + ' ' + escapeHtml(medecinNom) + (medecinSpecialite ? ' <small style="color:var(--text-muted);">(' + escapeHtml(medecinSpecialite) + ')</small>' : '') : '<span style="background:rgba(245,158,11,0.12); color:#b45309; padding:4px 12px; border-radius:20px; font-weight:600; font-size:0.85rem;">À affecter</span>'}</td>
+                <td style="padding: 1rem 0.5rem; color: var(--text-muted);">${escapeHtml(rdv.motif || '-')}</td>
+                <td style="padding: 1rem 0.5rem;">${actionsHtml}</td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 
     const modalRdv = document.getElementById('modal-rendezvous');
@@ -204,11 +309,12 @@ document.addEventListener('DOMContentLoaded', () => {
     btnAddRdv.addEventListener('click', () => {
         modalRdv.style.display = 'flex';
         formRdv.reset();
-        ApiClient.request('/users/staff', 'GET')
-            .then(staff => {
+        ApiClient.request('/medecins', 'GET')
+            .then(res => {
+                const medecins = (res && res.records) ? res.records : [];
                 const select = document.getElementById('rdv-medecin-select');
                 select.innerHTML = '<option value="">(Facultatif)</option>';
-                staff.filter(s => Auth.normalizeRole(s.role) === 'medecin' && !(s.is_assistant == 1)).forEach(m => {
+                medecins.forEach(m => {
                     select.innerHTML += `<option value="${escapeHtml(m.id)}">Dr. ${escapeHtml(m.prenom)} ${escapeHtml(m.nom)}${m.specialite ? ` — ${escapeHtml(m.specialite)}` : ''}</option>`;
                 });
             });
@@ -237,7 +343,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.openValiderModal = function(id, preuvePath, medecinId) {
         document.getElementById('valider-rdv-id').value = id;
-        // Le ticket est généré côté serveur si non fourni, mais on pré-remplit une suggestion
         document.getElementById('valider-ticket').value = 'T-' + Math.floor(100 + Math.random() * 900);
         document.getElementById('valider-direct').checked = false;
         ApiClient.request('/medecins', 'GET')
@@ -285,7 +390,126 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    loadRendezvous();
+    // ─────────────────────────────────────────────
+    // GESTION DU REPORT DE RENDEZ-VOUS
+    // ─────────────────────────────────────────────
+    const modalReporter = document.getElementById('modal-reporter');
+    const formReporter = document.getElementById('form-reporter');
+    window.openReporterModal = function(id, patientLabel, currentDateHeure) {
+        document.getElementById('reporter-rdv-id').value = id;
+        document.getElementById('reporter-patient-info').textContent = `Patient : ${patientLabel}`;
+        if (currentDateHeure) {
+            const d = new Date(currentDateHeure);
+            const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            document.getElementById('reporter-date-heure').value = iso;
+        }
+        document.getElementById('reporter-motif').value = '';
+        modalReporter.style.display = 'flex';
+    };
+    document.getElementById('close-modal-reporter').addEventListener('click', () => modalReporter.style.display = 'none');
+    formReporter.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('reporter-rdv-id').value;
+        const dateHeure = document.getElementById('reporter-date-heure').value;
+        const motif = document.getElementById('reporter-motif').value;
+        try {
+            await ApiClient.request(`/rendezvous/${id}/reporter`, 'PUT', {
+                date_heure: dateHeure,
+                motif_report: motif
+            });
+            modalReporter.style.display = 'none';
+            loadRendezvous();
+            showToast("Rendez-vous reporté avec succès ! Patient notifié.", "success");
+        } catch(err) {
+            showToast("Erreur : " + err.message, "danger");
+        }
+    });
+
+    // ─────────────────────────────────────────────
+    // GESTION DE LA RÉAFFECTATION DU MÉDECIN
+    // ─────────────────────────────────────────────
+    const modalReassigner = document.getElementById('modal-reassigner');
+    const formReassigner = document.getElementById('form-reassigner');
+    window.openReassignerModal = function(id, patientLabel, currentMedecinId) {
+        document.getElementById('reassigner-rdv-id').value = id;
+        document.getElementById('reassigner-patient-info').textContent = `Patient : ${patientLabel}`;
+        ApiClient.request('/medecins', 'GET')
+            .then(res => {
+                const medecins = (res && res.records) ? res.records : [];
+                const select = document.getElementById('reassigner-medecin-select');
+                select.innerHTML = '<option value="">— Choisir un médecin remplaçant —</option>';
+                medecins.forEach(m => {
+                    const label = `Dr. ${escapeHtml(m.prenom)} ${escapeHtml(m.nom)}` + (m.specialite ? ` — ${escapeHtml(m.specialite)}` : '');
+                    select.innerHTML += `<option value="${escapeHtml(m.id)}"${String(m.id) === String(currentMedecinId) ? ' disabled' : ''}>${label}${String(m.id) === String(currentMedecinId) ? ' (Médecin actuel)' : ''}</option>`;
+                });
+            })
+            .catch(() => {});
+        modalReassigner.style.display = 'flex';
+    };
+    document.getElementById('close-modal-reassigner').addEventListener('click', () => modalReassigner.style.display = 'none');
+    formReassigner.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('reassigner-rdv-id').value;
+        const medecinId = document.getElementById('reassigner-medecin-select').value;
+        if (!medecinId) { showToast("Veuillez sélectionner un médecin remplaçant.", "warning"); return; }
+        try {
+            await ApiClient.request(`/rendezvous/${id}/reassigner`, 'PUT', { medecin_id: medecinId });
+            modalReassigner.style.display = 'none';
+            loadRendezvous();
+            showToast("Médecin réaffecté avec succès ! Notifications envoyées.", "success");
+        } catch(err) {
+            showToast("Erreur : " + err.message, "danger");
+        }
+    });
+
+    // ─────────────────────────────────────────────
+    // GESTION DE LA PRISE DES CONSTANTES VITALES
+    // ─────────────────────────────────────────────
+    const modalConstantes = document.getElementById('modal-constantes');
+    const formConstantes = document.getElementById('form-constantes');
+    window.openConstantesModal = function(id, patientLabel, ticket, existingConst) {
+        document.getElementById('constantes-rdv-id').value = id;
+        document.getElementById('constantes-patient-info').textContent = `Patient : ${patientLabel}` + (ticket ? ` (Ticket #${ticket})` : '');
+        const c = existingConst || {};
+        document.getElementById('const-poids').value = c.poids || '';
+        document.getElementById('const-taille').value = c.taille || '';
+        document.getElementById('const-temp').value = c.temperature || '';
+        document.getElementById('const-tension').value = c.tension || '';
+        modalConstantes.style.display = 'flex';
+    };
+    document.getElementById('close-modal-constantes').addEventListener('click', () => modalConstantes.style.display = 'none');
+    formConstantes.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('constantes-rdv-id').value;
+        const payload = {
+            poids: document.getElementById('const-poids').value || null,
+            taille: document.getElementById('const-taille').value || null,
+            temperature: document.getElementById('const-temp').value || null,
+            tension: document.getElementById('const-tension').value || null
+        };
+        try {
+            await ApiClient.request(`/rendezvous/${id}/constantes`, 'PUT', payload);
+            modalConstantes.style.display = 'none';
+            loadRendezvous();
+            showToast("Constantes enregistrées ! Elles seront transmises au médecin.", "success");
+        } catch(err) {
+            showToast("Erreur : " + err.message, "danger");
+        }
+    });
+
+    // Annuler un RDV
+    window.annulerRdv = async function(id) {
+        if (!confirm("Voulez-vous vraiment annuler ce rendez-vous ?")) return;
+        try {
+            await ApiClient.request(`/rendezvous/${id}/annuler`, 'PUT');
+            loadRendezvous();
+            showToast("Rendez-vous annulé.", "info");
+        } catch(err) {
+            showToast("Erreur : " + err.message, "danger");
+        }
+    };
+
+        loadRendezvous();
     loadPatients();
 
     // Les notifications sont gérées par js/notifications.js (cloche + polling).

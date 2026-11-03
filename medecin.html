@@ -104,6 +104,17 @@
                             <p class="text-muted text-center mt-2">Chargement...</p>
                         </div>
                     </div>
+
+                    <!-- Retours du Laboratoire (Résultats prêts) -->
+                    <div class="card" style="border-left: 4px solid var(--success-color, #10b981);">
+                        <h4 style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 1rem; margin-top: 0; display:flex; justify-content:space-between; align-items:center; color: var(--success-color, #10b981);">
+                            <span>🔬 Retours d'examens (Résultats prêts pour diagnostic)</span>
+                            <span id="badge-retours-labo" class="badge badge-success" style="font-size:0.8rem;">0 prêt(s)</span>
+                        </h4>
+                        <div id="medecin-retours-labo">
+                            <p class="text-muted text-center mt-2">Aucun résultat d'analyse en attente d'interprétation.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -116,6 +127,27 @@
                     </div>
                     <button class="btn btn-secondary" id="btn-back-dashboard">Retour à la salle d'attente</button>
                 </div>
+
+                <!-- Fiche Synthèse Patient & Constantes Accueil -->
+                <div id="consultation-patient-banner" class="card" style="margin-bottom: 1.5rem; background: rgba(37,99,235,0.03); border: 1px solid rgba(37,99,235,0.18); padding: 1rem 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <div id="banner-patient-badges" style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 0.4rem;">
+                                <span class="badge" style="background: rgba(37,99,235,0.15); color: var(--primary-color); font-size: 0.82rem;" id="banner-patient-age-sexe">Patient</span>
+                                <span class="badge" style="background: rgba(239,68,68,0.12); color: #dc2626; font-size: 0.82rem;" id="banner-patient-gsang">🩸 Groupe sanguin : —</span>
+                                <span class="badge" style="background: rgba(100,116,139,0.12); color: #475569; font-size: 0.82rem;" id="banner-patient-tel">📞 Tél : —</span>
+                            </div>
+                            <div style="font-size: 0.9rem; color: var(--text-main);" id="banner-patient-motif-box">
+                                <strong>📌 Motif d'accueil (Secrétaire) :</strong> <span id="banner-patient-motif" style="color: var(--primary-dark); font-weight: 500;">Non précisé</span>
+                            </div>
+                        </div>
+                        <div id="banner-patient-constantes-box" style="padding: 0.5rem 0.8rem; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; font-size: 0.82rem; color: #047857;">
+                            <strong>🩺 Constantes d'accueil :</strong>
+                            <span id="banner-patient-constantes-text">En attente de prise des constantes</span>
+                        </div>
+                    </div>
+                </div>
+
 
                 <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
                     
@@ -143,7 +175,17 @@
                             <form id="form-nouvelle-consultation">
                                 <input type="hidden" id="cons-patient-id">
                                 <input type="hidden" id="cons-rendezvous-id">
+                                <input type="hidden" id="cons-consultation-id">
 
+                                <!-- Alerte Retour Labo (affichée en Étape 2) -->
+                                <div id="consultation-retour-labo-alert" style="display:none; margin-bottom: 1.5rem; padding: 1rem 1.25rem; border-radius: 8px; background: rgba(16,185,129,0.08); border: 2px solid #10b981;">
+                                    <h4 style="margin: 0 0 0.5rem 0; color: #065f46; display: flex; align-items: center; gap: 0.5rem;">
+                                        <span>🔬</span> Résultats d'Analyses Reçus du Laboratoire
+                                    </h4>
+                                    <div id="consultation-retour-labo-content" style="font-size: 0.9rem;"></div>
+                                </div>
+
+                                <!-- Constantes vitales d'accueil -->
                                 <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                     <div class="form-group">
                                         <label>Poids (kg)</label>
@@ -164,56 +206,144 @@
                                 </div>
 
                                 <div class="form-group" style="margin-top: 1rem;">
-                                    <label>Symptômes <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" id="cons-symptomes" rows="3" required></textarea>
+                                    <label>Symptômes observés & Anamnèse <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="cons-symptomes" rows="3" required placeholder="Description des symptômes observés chez le patient..."></textarea>
                                 </div>
 
-                                <div class="form-group">
-                                    <label>Diagnostic</label>
-                                    <textarea class="form-control" id="cons-diagnostic" rows="3"></textarea>
-                                </div>
-
-                                <!-- Section Ordonnance intégrée -->
-                                <div style="background: rgba(var(--primary-color-rgb), 0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(var(--primary-color-rgb), 0.1);">
-                                    <h4 style="margin-top: 0; color: var(--primary-color);">Prescription Médicale</h4>
-                                    
-                                    <div id="ordonnance-list" style="margin-bottom: 1rem;">
-                                        <!-- Liste des médicaments ajoutés -->
+                                <!-- ================= ÉTAPE 1 : PRÉSOMPTION & BON DE LABO ================= -->
+                                <div id="panel-etape-1" style="margin-top: 1.5rem; background: rgba(245, 158, 11, 0.04); border: 2px solid #f59e0b; border-radius: 10px; padding: 1.25rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                        <h3 style="margin: 0; color: #b45309; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem;">
+                                            <span>📋</span> ÉTAPE 1 : Diagnostic de Présomption & Bon de Laboratoire
+                                        </h3>
+                                        <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #b45309; font-weight: 700;">Préliminaire</span>
                                     </div>
 
-                                    <div class="grid-presc" style="display: grid; grid-template-columns: 2fr 1.4fr 0.9fr auto; gap: 0.5rem; align-items: end;">
-                                        <div class="form-group" style="margin: 0;">
-                                            <label style="font-size: 0.8rem;">Médicament</label>
-                                            <input type="text" class="form-control" id="presc-medicament" placeholder="Nom du médicament">
+                                    <div class="form-group" style="margin-bottom: 1.25rem;">
+                                        <label style="font-weight: 600; color: #78350f;">Diagnostic de Présomption (Hypothèse clinique initiale) <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" id="cons-diagnostic-presomption" rows="2" placeholder="Ex: Suspicion de paludisme grave, suspicion de fièvre typhoïde..."></textarea>
+                                    </div>
+
+                                    <!-- Section Interactive d'Ajout d'Examens -->
+                                    <div style="background: white; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 1rem;">
+                                        <h4 style="margin: 0 0 0.5rem 0; color: var(--primary-color); font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                                            <span>🔬</span> Composer le Bon de Laboratoire
+                                        </h4>
+                                        <p style="margin: 0 0 0.75rem 0; font-size: 0.82rem; color: var(--text-muted);">
+                                            Sélectionnez ou saisissez les examens à réaliser, puis cliquez sur « Ajouter au bon ».
+                                        </p>
+
+                                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+                                            <div style="flex: 2; min-width: 240px;">
+                                                <select id="select-catalogue-examens" class="form-control" style="font-size: 0.9rem;">
+                                                    <option value="">-- Choisir un examen dans le catalogue --</option>
+                                                </select>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary" id="btn-add-examen-bon" style="padding: 0.5rem 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.35rem;">
+                                                <span>➕</span> Ajouter l'examen
+                                            </button>
                                         </div>
-                                        <div class="form-group" style="margin: 0;">
-                                            <label style="font-size: 0.8rem;">Posologie</label>
-                                            <input type="text" class="form-control" id="presc-posologie" placeholder="Ex: 1 matin, 1 soir">
+
+                                        <!-- Liste / Panier dynamique des examens -->
+                                        <div id="container-panier-examens" style="background: var(--bg-main); border: 1px dashed rgba(0,0,0,0.15); border-radius: 6px; padding: 0.75rem; min-height: 80px;">
+                                            <p id="empty-panier-msg" class="text-muted text-center" style="margin: 1rem 0; font-size: 0.85rem;">
+                                                Aucun examen ajouté au bon. Choisissez un examen ci-dessus et cliquez sur « Ajouter ».
+                                            </p>
+                                            <div id="liste-examens-prescrits"></div>
                                         </div>
-                                        <div class="form-group" style="margin: 0;">
-                                            <label style="font-size: 0.8rem;">Durée</label>
-                                            <input type="text" class="form-control" id="presc-duree" placeholder="Ex: 7 jours">
+
+                                        <div id="total-examens-bar" style="display: none; justify-content: space-between; align-items: center; margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid rgba(0,0,0,0.06); font-size: 0.9rem;">
+                                            <span style="color: var(--text-muted); font-weight: 600;" id="count-examens-prescrits">0 examen(s) sélectionné(s)</span>
+                                            <small style="color: var(--text-muted);">Tarification et paiement gérés à la caisse</small>
                                         </div>
-                                        <button type="button" class="btn btn-secondary" id="btn-add-medicament">Ajouter</button>
+                                    </div>
+
+                                    <!-- Bouton de validation Étape 1 -->
+                                    <div style="margin-top: 1.25rem;">
+                                        <button type="button" class="btn btn-warning btn-lg" id="btn-emettre-bon-labo" style="width: 100%; padding: 0.75rem; font-weight: 700; font-size: 0.95rem; box-shadow: var(--shadow-sm);">
+                                            🧪 Valider l'Étape 1 : Émettre Bon de Labo & Envoyer en Caisse
+                                        </button>
+                                    </div>
+
+                                    <!-- Option Cas simple sans passage labo -->
+                                    <div style="margin-top: 0.8rem; text-align: center;">
+                                        <label style="cursor: pointer; font-size: 0.85rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.4rem;">
+                                            <input type="checkbox" id="chk-cas-simple">
+                                            <span>Cas simple : Aucun examen de laboratoire requis (Passer directement au diagnostic final)</span>
+                                        </label>
                                     </div>
                                 </div>
 
-                                <div class="form-group" style="margin-top: 1.5rem;">
-                                    <label style="font-weight: 600; color: var(--primary-color);">Prescrire des Examens de Laboratoire</label>
-                                    <select id="cons-examens" class="form-control" multiple style="height: 110px;">
-                                        <!-- Loaded via JS -->
-                                    </select>
-                                    <small style="color: var(--text-muted);">Maintenez Ctrl (ou Cmd sur Mac) pour sélectionner plusieurs examens.</small>
+                                <!-- ================= ÉTAPE 2 : CERTITUDE & ORDONNANCE ================= -->
+                                <div id="panel-etape-2" style="margin-top: 1.5rem; background: rgba(16, 185, 129, 0.04); border: 2px solid #10b981; border-radius: 10px; padding: 1.25rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                        <h3 style="margin: 0; color: #047857; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem;">
+                                            <span>🩺</span> ÉTAPE 2 : Diagnostic de Certitude & Ordonnance Finale
+                                        </h3>
+                                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #047857; font-weight: 700;">Conclusion Médicale</span>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 1.25rem;">
+                                        <label style="font-weight: 600; color: #065f46;">Diagnostic de Certitude (Confirmé après analyses ou examen clinique) <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" id="cons-diagnostic-certitude" rows="2" placeholder="Diagnostic définitif de certitude..."></textarea>
+                                    </div>
+
+                                    <!-- Section Ordonnance intégrée -->
+                                    <div style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem; border: 1px solid rgba(16, 185, 129, 0.25);">
+                                        <h4 style="margin-top: 0; color: var(--primary-color); font-size: 0.95rem;">💊 Prescription Médicale Finale</h4>
+                                        
+                                        <div id="ordonnance-list" style="margin-bottom: 1rem;">
+                                            <!-- Liste des médicaments ajoutés -->
+                                        </div>
+
+                                        <div class="grid-presc" style="display: grid; grid-template-columns: 2fr 1.4fr 0.9fr auto; gap: 0.5rem; align-items: end;">
+                                            <div class="form-group" style="margin: 0;">
+                                                <label style="font-size: 0.8rem;">Médicament</label>
+                                                <input type="text" class="form-control" id="presc-medicament" placeholder="Nom du médicament">
+                                            </div>
+                                            <div class="form-group" style="margin: 0;">
+                                                <label style="font-size: 0.8rem;">Posologie</label>
+                                                <input type="text" class="form-control" id="presc-posologie" placeholder="Ex: 1 matin, 1 soir">
+                                            </div>
+                                            <div class="form-group" style="margin: 0;">
+                                                <label style="font-size: 0.8rem;">Durée</label>
+                                                <input type="text" class="form-control" id="presc-duree" placeholder="Ex: 7 jours">
+                                            </div>
+                                            <button type="button" class="btn btn-secondary" id="btn-add-medicament">Ajouter</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Recommandations & Notes complémentaires</label>
+                                        <textarea class="form-control" id="cons-notes" rows="2" placeholder="Repos, régime alimentaire, conseils au patient..."></textarea>
+                                    </div>
+
+                                    <!-- Date de contrôle du patient (Suivi médical) -->
+                                    <div class="form-group" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 0.9rem; margin-top: 1rem;">
+                                        <label style="color: #065f46; font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
+                                            <span>📅</span> Date du prochain rendez-vous de contrôle (Facultatif)
+                                        </label>
+                                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.4rem;">
+                                            <input type="date" class="form-control" id="cons-date-controle" style="max-width: 200px;">
+                                            <div style="display: flex; gap: 0.35rem;">
+                                                <button type="button" class="btn btn-secondary btn-sm btn-quick-ctrl" data-days="7">+7 jours</button>
+                                                <button type="button" class="btn btn-secondary btn-sm btn-quick-ctrl" data-days="14">+14 jours</button>
+                                                <button type="button" class="btn btn-secondary btn-sm btn-quick-ctrl" data-days="30">+1 mois</button>
+                                                <button type="button" class="btn btn-secondary btn-sm" id="btn-clear-ctrl" style="color: var(--text-muted);">&times; Effacer</button>
+                                            </div>
+                                        </div>
+                                        <small style="color: var(--text-muted); display: block; margin-top: 0.3rem;">Un rappel automatique sera envoyé au patient avant cette date pour son suivi clinique.</small>
+                                    </div>
+
+                                    <div style="margin-top: 1.25rem;">
+                                        <button type="submit" class="btn btn-primary btn-lg" id="btn-submit-consultation" style="width: 100%; padding: 0.75rem; font-weight: 700; font-size: 0.95rem; background: #047857; border-color: #047857;">
+                                            ✅ Valider l'Étape 2 : Clôturer la Consultation & Remettre l'Ordonnance
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div class="form-group">
-                                    <label>Notes complémentaires</label>
-                                    <textarea class="form-control" id="cons-notes" rows="2"></textarea>
-                                </div>
-
-                                <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
-                                    <button type="button" class="btn btn-secondary" id="btn-reset-consultation">Effacer</button>
-                                    <button type="submit" class="btn btn-primary">Terminer la consultation</button>
+                                <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+                                    <button type="button" class="btn btn-secondary" id="btn-reset-consultation">Effacer tout</button>
                                 </div>
                             </form>
                         </div>
@@ -226,7 +356,7 @@
                 <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                     <div>
                         <h2 style="margin: 0; color: var(--text-main);">Dossiers Patients</h2>
-                        <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Recherchez un patient par nom, prénom, IUP ou téléphone pour ouvrir son dossier.</p>
+                        <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Consultez et recherchez parmi les patients qui vous sont affectés ou que vous avez déjà pris en charge.</p>
                     </div>
                 </div>
 

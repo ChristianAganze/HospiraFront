@@ -5,7 +5,7 @@
  */
 
 const API_BASE_URL = (() => {
-    const raw = (typeof window !== 'undefined' && window.API_BASE_URL) ? String(window.API_BASE_URL) : '';
+    const raw = (typeof window !== 'undefined' && window.API_BASE_URL) ? String(window.API_BASE_URL) : 'http://localhost:8080/api';
     return raw.trim().replace(/\/+$/, '');
 })();
 

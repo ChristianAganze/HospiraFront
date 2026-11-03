@@ -165,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // File d'attente du jour
     // ------------------------------------------------------------------
     function loadAttente() {
+        // 1. Charger les patients en salle d'attente (Consultations du jour)
         ApiClient.request('/rendezvous', 'GET')
             .then(res => {
                 const rdvs = (res && res.records) ? res.records : (Array.isArray(res) ? res : []);
@@ -185,41 +186,139 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (attente.length === 0) {
                     container.innerHTML = '<p class="text-muted text-center mt-2" style="padding: 2rem;">Aucun patient qui vous est affecté en salle d\'attente aujourd\'hui.</p>';
+                } else {
+                    attente.forEach(rdv => {
+                        const patientPrenom = rdv.patient ? rdv.patient.prenom : (rdv.patient_prenom || '');
+                        const patientNom = rdv.patient ? rdv.patient.nom : (rdv.patient_nom || '');
+                        const patientIup = rdv.patient ? rdv.patient.id_iup : '';
+                        const patientId = rdv.patient_id;
+                        const ticket = rdv.numero_passage || 'N/A';
+                        const specialite = rdv.medecin && rdv.medecin.specialite ? rdv.medecin.specialite : '';
+                        
+                        // Constantes prises à l'accueil
+                        const consts = rdv.constantes || {};
+                        const hasConst = consts.poids || consts.temperature || consts.tension || consts.taille;
+                        const constsBadge = hasConst
+                            ? `<span class="badge" style="background:rgba(16,185,129,0.12); color:#047857; margin-left:0.5rem; font-size:0.75rem; border:1px solid rgba(16,185,129,0.3);">🩺 ${escapeHtml([consts.tension ? 'TA: ' + consts.tension : '', consts.temperature ? consts.temperature + '°C' : '', consts.poids ? consts.poids + 'kg' : ''].filter(Boolean).join(' · '))}</span>`
+                            : '';
+
+                        const card = document.createElement('div');
+                        card.style.padding = '1rem';
+                        card.style.border = '1px solid rgba(0,0,0,0.05)';
+                        card.style.borderRadius = 'var(--radius-md)';
+                        card.style.marginBottom = '1rem';
+                        card.style.display = 'flex';
+                        card.style.justifyContent = 'space-between';
+                        card.style.alignItems = 'center';
+                        card.style.background = 'var(--bg-main)';
+                        card.innerHTML = `
+                            <div>
+                                <h4 style="margin: 0 0 0.5rem 0; color: var(--primary-dark); display:flex; align-items:center; flex-wrap:wrap;">
+                                    Ticket #${escapeHtml(ticket)} — ${escapeHtml(patientPrenom)} ${escapeHtml(patientNom)}
+                                    ${constsBadge}
+                                </h4>
+                                <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Motif: ${escapeHtml(rdv.motif || 'Général')}${specialite ? ` <span class="badge" style="background:var(--primary-color); color:white; margin-left:0.4rem;">${escapeHtml(specialite)}</span>` : ''}</p>
+                            </div>
+                            <button class="btn btn-primary btn-sm" data-rdv-id="${Number(rdv.id)}" data-patient-id="${Number(patientId)}" data-patient-name="${escapeHtml(patientPrenom + ' ' + patientNom)}" data-patient-iup="${escapeHtml(patientIup || "")}" data-rdv-motif="${escapeHtml(rdv.motif || "")}">Consulter</button>
+                        `;
+                        card.querySelector('button').addEventListener('click', (event) => {
+                            const btn = event.currentTarget;
+                            demarrerConsultation(btn.dataset.rdvId, btn.dataset.patientId, btn.dataset.patientName, btn.dataset.patientIup, consts, null, null, btn.dataset.rdvMotif);
+                        });
+                        container.appendChild(card);
+                    });
+                }
+            })
+            .catch(error => {
+                document.getElementById('medecin-file-attente').innerHTML = `<p class="text-danger text-center">Erreur : ${escapeHtml(error.message)}</p>`;
+            });
+
+        // 2. Charger les retours du Laboratoire (Résultats d'examens terminés)
+        loadRetoursLabo();
+    }
+
+    function loadRetoursLabo() {
+        const container = document.getElementById('medecin-retours-labo');
+        const badge = document.getElementById('badge-retours-labo');
+        if (!container) return;
+
+        ApiClient.request('/prescriptions-examens?statut_examen=Termine', 'GET')
+            .then(res => {
+                const list = (res && res.prescriptions) ? res.prescriptions : [];
+                const monId = Number(user.id);
+                const monSuperviseur = user.is_assistant ? Number(user.superviseur_id) : null;
+                const isAdmin = Auth.normalizeRole(user.role) === 'admin';
+
+                const mesExamensTermines = list.filter(item => {
+                    if (isAdmin) return true;
+                    const medId = Number(item.medecin_id);
+                    return medId === monId || (monSuperviseur && medId === monSuperviseur);
+                });
+
+                // Grouper par patient
+                const parPatient = {};
+                mesExamensTermines.forEach(item => {
+                    const pid = item.patient_id;
+                    if (!parPatient[pid]) {
+                        parPatient[pid] = {
+                            patient_id: pid,
+                            patient_nom: item.patient_nom,
+                            patient_prenom: item.patient_prenom,
+                            patient_iup: item.patient_iup,
+                            ticket_labo: item.ticket_labo,
+                            examens: []
+                        };
+                    }
+                    parPatient[pid].examens.push(item);
+                });
+
+                const patientsList = Object.values(parPatient);
+                if (badge) badge.textContent = `${patientsList.length} prêt(s)`;
+
+                if (patientsList.length === 0) {
+                    container.innerHTML = '<p class="text-muted text-center mt-2" style="padding: 1.5rem;">Aucun résultat d\'analyse en attente d\'interprétation.</p>';
                     return;
                 }
 
-                attente.forEach(rdv => {
-                    const patientPrenom = rdv.patient ? rdv.patient.prenom : (rdv.patient_prenom || '');
-                    const patientNom = rdv.patient ? rdv.patient.nom : (rdv.patient_nom || '');
-                    const patientIup = rdv.patient ? rdv.patient.id_iup : '';
-                    const patientId = rdv.patient_id;
-                    const ticket = rdv.numero_passage || 'N/A';
-                    const specialite = rdv.medecin && rdv.medecin.specialite ? rdv.medecin.specialite : '';
+                container.innerHTML = '';
+                patientsList.forEach(groupe => {
+                    const patientLabel = `${groupe.patient_prenom} ${groupe.patient_nom}`.trim();
+                    const iupLabel = groupe.patient_iup ? ` (${groupe.patient_iup})` : '';
+                    const examensNames = groupe.examens.map(e => e.examen_nom).join(', ');
+                    const ticketLaboLabel = groupe.ticket_labo ? `Ticket Labo #${groupe.ticket_labo}` : '';
+
                     const card = document.createElement('div');
-                    card.style.padding = '1rem';
-                    card.style.border = '1px solid rgba(0,0,0,0.05)';
+                    card.style.padding = '0.9rem';
+                    card.style.border = '1px solid rgba(16,185,129,0.3)';
                     card.style.borderRadius = 'var(--radius-md)';
-                    card.style.marginBottom = '1rem';
+                    card.style.marginBottom = '0.75rem';
                     card.style.display = 'flex';
                     card.style.justifyContent = 'space-between';
                     card.style.alignItems = 'center';
-                    card.style.background = 'var(--bg-main)';
+                    card.style.background = 'rgba(16,185,129,0.04)';
                     card.innerHTML = `
                         <div>
-                            <h4 style="margin: 0 0 0.5rem 0; color: var(--primary-dark);">Ticket #${escapeHtml(ticket)} — ${escapeHtml(patientPrenom)} ${escapeHtml(patientNom)}</h4>
-                            <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Motif: ${escapeHtml(rdv.motif || 'Général')}${specialite ? ` <span class="badge" style="background:var(--primary-color); color:white; margin-left:0.4rem;">${escapeHtml(specialite)}</span>` : ''}</p>
+                            <h4 style="margin: 0 0 0.3rem 0; color: #065f46;">
+                                👤 ${escapeHtml(patientLabel)} <span style="font-size:0.8rem; font-weight:normal; color:var(--text-muted);">${escapeHtml(iupLabel)}</span>
+                                <span class="badge badge-success" style="font-size:0.75rem; margin-left:0.5rem;">Résultats disponibles</span>
+                            </h4>
+                            <p style="margin: 0; font-size: 0.82rem; color: var(--text-main);">
+                                <strong>Examens :</strong> ${escapeHtml(examensNames)} ${ticketLaboLabel ? `<span style="color:var(--text-muted); margin-left:0.5rem;">· ${escapeHtml(ticketLaboLabel)}</span>` : ''}
+                            </p>
                         </div>
-                        <button class="btn btn-primary btn-sm" data-rdv-id="${Number(rdv.id)}" data-patient-id="${Number(patientId)}" data-patient-name="${escapeHtml(patientPrenom + ' ' + patientNom)}" data-patient-iup="${escapeHtml(patientIup || '')}">Consulter</button>
+                        <button class="btn btn-success btn-sm btn-retour-consult" style="padding: 0.4rem 0.8rem; font-size: 0.82rem; white-space: nowrap;">
+                            📋 Interpréter & Ordonnance finale
+                        </button>
                     `;
-                    card.querySelector('button').addEventListener('click', (event) => {
-                        const btn = event.currentTarget;
-                        demarrerConsultation(btn.dataset.rdvId, btn.dataset.patientId, btn.dataset.patientName, btn.dataset.patientIup);
+                    card.querySelector('.btn-retour-consult').addEventListener('click', () => {
+                        const consId = (groupe.examens && groupe.examens[0]) ? groupe.examens[0].consultation_id : null;
+                        demarrerConsultation('', groupe.patient_id, patientLabel, groupe.patient_iup, null, consId, groupe.examens);
                     });
                     container.appendChild(card);
                 });
             })
-            .catch(error => {
-                document.getElementById('medecin-file-attente').innerHTML = `<p class="text-danger text-center">Erreur : ${escapeHtml(error.message)}</p>`;
+            .catch(err => {
+                container.innerHTML = `<p class="text-danger text-center">Erreur chargement retours labo : ${escapeHtml(err.message)}</p>`;
             });
     }
 
@@ -228,25 +327,144 @@ document.addEventListener('DOMContentLoaded', () => {
     // ------------------------------------------------------------------
     let currentPatient = null;
 
-    window.demarrerConsultation = function (rdvId, patientId, patientName, patientIup) {
+    window.demarrerConsultation = function (rdvId, patientId, patientName, patientIup, rdvConstantes, consId, retoursLabo, rdvMotif) {
         currentPatient = { id: Number(patientId), name: patientName || 'Patient', iup: patientIup || '' };
         const form = document.getElementById('form-nouvelle-consultation');
         form.reset();
         document.getElementById('cons-patient-id').value = patientId;
         document.getElementById('cons-rendezvous-id').value = rdvId || '';
+        const consIdInput = document.getElementById('cons-consultation-id');
+        if (consIdInput) consIdInput.value = consId || '';
+
         document.getElementById('consultation-patient-name').textContent = patientName || 'Dossier Patient';
         document.getElementById('consultation-patient-info').textContent = patientIup
             ? `IUP : ${patientIup}`
-            : 'Consultation hors rendez-vous';
+            : 'Consultation';
+
+        // Valeurs par défaut du bandeau
+        const ageSexeEl = document.getElementById('banner-patient-age-sexe');
+        const gsangEl = document.getElementById('banner-patient-gsang');
+        const telEl = document.getElementById('banner-patient-tel');
+        const motifEl = document.getElementById('banner-patient-motif');
+        const constTextEl = document.getElementById('banner-patient-constantes-text');
+
+        if (ageSexeEl) ageSexeEl.textContent = 'Chargement dossier…';
+        if (motifEl) motifEl.textContent = rdvMotif || 'Non précisé';
+
+        // Si des constantes ont été passées directement
+        function appliquerConstantes(c) {
+            if (!c) return;
+            if (c.poids) document.getElementById('cons-poids').value = c.poids;
+            if (c.taille) document.getElementById('cons-taille').value = c.taille;
+            if (c.temperature) document.getElementById('cons-temp').value = c.temperature;
+            if (c.tension) document.getElementById('cons-tension').value = c.tension;
+
+            const parts = [
+                c.tension ? 'TA : ' + c.tension : '',
+                c.temperature ? c.temperature + '°C' : '',
+                c.poids ? c.poids + ' kg' : '',
+                c.taille ? c.taille + ' cm' : ''
+            ].filter(Boolean);
+
+            if (constTextEl) {
+                constTextEl.textContent = parts.length > 0 ? parts.join(' · ') : 'Aucune constante enregistrée';
+            }
+        }
+
+        if (rdvConstantes) appliquerConstantes(rdvConstantes);
+
+        // Récupérer les informations complètes du patient depuis la base de données
+        ApiClient.request(`/patients/${patientId}`, 'GET')
+            .then(res => {
+                const p = (res && res.patient) ? res.patient : null;
+                if (!p) return;
+
+                // Afficher identité & antécédents
+                if (ageSexeEl) {
+                    const sexeLabel = p.sexe === 'F' ? 'Femme' : (p.sexe === 'M' ? 'Homme' : (p.sexe || ''));
+                    const ageLabel = p.age != null ? `${p.age} ans` : '';
+                    ageSexeEl.textContent = [sexeLabel, ageLabel].filter(Boolean).join(', ') || 'Patient';
+                }
+                if (gsangEl) {
+                    gsangEl.textContent = p.groupe_sanguin ? `🩸 Groupe : ${p.groupe_sanguin}` : '🩸 Groupe : Non renseigné';
+                }
+                if (telEl) {
+                    telEl.textContent = p.telephone ? `📞 Tél : ${p.telephone}` : '📞 Tél : —';
+                }
+
+                // Motif du rendez-vous
+                const motifFinal = (p.dernier_rdv && p.dernier_rdv.motif) || rdvMotif;
+                if (motifEl && motifFinal) {
+                    motifEl.textContent = motifFinal;
+                }
+
+                // Pré-remplir les symptômes avec le motif si le champ est encore vide
+                const symptomesInput = document.getElementById('cons-symptomes');
+                if (symptomesInput && !symptomesInput.value && motifFinal) {
+                    symptomesInput.value = motifFinal;
+                }
+
+                // Si les constantes n'étaient pas passées en paramètre, les charger du dernier RDV
+                if (p.dernier_rdv && p.dernier_rdv.constantes) {
+                    appliquerConstantes(p.dernier_rdv.constantes);
+                }
+                if (p.dernier_rdv && p.dernier_rdv.id && !document.getElementById('cons-rendezvous-id').value) {
+                    document.getElementById('cons-rendezvous-id').value = p.dernier_rdv.id;
+                }
+            })
+            .catch(err => {
+                console.warn('Impossible de charger le détail patient :', err);
+                if (ageSexeEl) ageSexeEl.textContent = 'Patient';
+            });
+
+        // Gestion du mode Retour Labo vs Consultation Initiale
+        const alertLabo = document.getElementById('consultation-retour-labo-alert');
+        const contentLabo = document.getElementById('consultation-retour-labo-content');
+        const panelEtape1 = document.getElementById('panel-etape-1');
+        const panelEtape2 = document.getElementById('panel-etape-2');
+
+        if (retoursLabo && retoursLabo.length > 0) {
+            if (alertLabo && contentLabo) {
+                alertLabo.style.display = 'block';
+                contentLabo.innerHTML = retoursLabo.map(e => `
+                    <div style="margin-bottom: 0.5rem; padding: 0.5rem; background: white; border-radius: 6px; border: 1px solid rgba(16,185,129,0.3);">
+                        <strong>🔬 ${escapeHtml(e.examen_nom)}</strong> ${e.ticket_labo ? `<span style="color:var(--text-muted); font-size:0.8rem;">(${escapeHtml(e.ticket_labo)})</span>` : ''} :
+                        <div style="margin-top:0.25rem; font-weight:600; color:#065f46;">
+                            ${escapeHtml(e.resultat_texte || 'Analyse terminée sans texte complémentaire.')}
+                        </div>
+                        ${e.fichier_path ? `<div style="margin-top:0.25rem;"><a href="${ApiClient.staticUrl(e.fichier_path)}" target="_blank" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.5rem; font-size:0.75rem;">📄 Voir le compte-rendu PDF / Image</a></div>` : ''}
+                    </div>
+                `).join('');
+            }
+            if (panelEtape1) panelEtape1.style.display = 'none';
+            if (panelEtape2) panelEtape2.style.display = 'block';
+            const certitudeEl = document.getElementById('cons-diagnostic-certitude');
+            if (certitudeEl) {
+                certitudeEl.required = true;
+                setTimeout(() => certitudeEl.focus(), 300);
+            }
+        } else {
+            if (alertLabo) alertLabo.style.display = 'none';
+            if (panelEtape1) panelEtape1.style.display = 'block';
+            if (panelEtape2) panelEtape2.style.display = 'none';
+            const certitudeEl = document.getElementById('cons-diagnostic-certitude');
+            if (certitudeEl) certitudeEl.required = false;
+        }
+
+        panierExamens = [];
+        renderPanierExamens();
         medicamentsOrdonnance = [];
         renderOrdonnance();
+        // Réinitialiser checkbox cas simple
+        const chkSimple = document.getElementById('chk-cas-simple');
+        if (chkSimple) chkSimple.checked = false;
         navConsultation.style.display = 'flex';
         switchView('consultation');
         loadHistoriquePatient(patientId);
         loadPatientExamens(patientId);
     };
 
-    window.ouvrirDossierPatient = function (patientId, patientName, patientIup) {
+        window.ouvrirDossierPatient = function (patientId, patientName, patientIup) {
         demarrerConsultation('', patientId, patientName, patientIup);
     };
 
@@ -512,83 +730,289 @@ document.addEventListener('DOMContentLoaded', () => {
     // ------------------------------------------------------------------
     // Catalogue d'examens
     // ------------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // Panier d'examens interactif (Bon de Labo)
+    // ------------------------------------------------------------------
+    let catalogueExamens = [];
+    let panierExamens = [];
+
     function loadExamensCatalog() {
-        const select = document.getElementById('cons-examens');
+        const select = document.getElementById('select-catalogue-examens');
         if (!select) return;
         ApiClient.request('/examens', 'GET')
             .then(res => {
                 if (res && res.examens) {
-                    select.innerHTML = res.examens.map(e => `<option value="${escapeHtml(e.id)}">${escapeHtml(e.nom)} (${escapeHtml(e.prix)} FC)</option>`).join('');
+                    catalogueExamens = res.examens;
+                    select.innerHTML = '<option value="">-- Choisir un examen dans le catalogue --</option>' +
+                        res.examens.map(e => `<option value="${e.id}" data-nom="${escapeHtml(e.nom)}" data-prix="${e.prix}">${escapeHtml(e.nom)}</option>`).join('');
                 }
             })
             .catch(() => {});
     }
     loadExamensCatalog();
 
+    function renderPanierExamens() {
+        const listEl = document.getElementById('liste-examens-prescrits');
+        const emptyMsg = document.getElementById('empty-panier-msg');
+        const totalBar = document.getElementById('total-examens-bar');
+        const countEl = document.getElementById('count-examens-prescrits');
+        const totalEl = document.getElementById('total-examens-prix');
+
+        if (!listEl) return;
+
+        if (panierExamens.length === 0) {
+            listEl.innerHTML = '';
+            if (emptyMsg) emptyMsg.style.display = 'block';
+            if (totalBar) totalBar.style.display = 'none';
+            return;
+        }
+
+        if (emptyMsg) emptyMsg.style.display = 'none';
+        if (totalBar) totalBar.style.display = 'flex';
+
+        let total = 0;
+        listEl.innerHTML = panierExamens.map((ex, idx) => {
+            total += Number(ex.prix) || 0;
+            return `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.6rem; background:white; border:1px solid rgba(245,158,11,0.25); border-radius:6px; margin-bottom:0.4rem;">
+                    <div>
+                        <strong style="font-size:0.88rem;">${escapeHtml(ex.nom)}</strong>
+                        
+                    </div>
+                    <button type="button" data-panier-idx="${idx}" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.2rem; padding:0 0.3rem;" title="Retirer cet examen">×</button>
+                </div>
+            `;
+        }).join('');
+
+        if (countEl) countEl.textContent = panierExamens.length + ' examen(s)';
+        // Pas de calcul financier côté médecin
+
+        // Boutons de suppression
+        listEl.querySelectorAll('button[data-panier-idx]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = Number(btn.dataset.panierIdx);
+                panierExamens.splice(idx, 1);
+                renderPanierExamens();
+            });
+        });
+    }
+
+    // Bouton "Ajouter l'examen" au panier
+    const btnAddExBon = document.getElementById('btn-add-examen-bon');
+    if (btnAddExBon) {
+        btnAddExBon.addEventListener('click', () => {
+            const select = document.getElementById('select-catalogue-examens');
+            if (!select || !select.value) {
+                showToast('Veuillez choisir un examen dans le catalogue.', 'warning');
+                return;
+            }
+            const opt = select.options[select.selectedIndex];
+            const id = Number(select.value);
+            // Vérifier doublon
+            if (panierExamens.some(e => e.id === id)) {
+                showToast('Cet examen est déjà dans le bon de laboratoire.', 'warning');
+                return;
+            }
+            panierExamens.push({
+                id: id,
+                nom: opt.dataset.nom || opt.textContent,
+                prix: opt.dataset.prix || 0
+            });
+            select.value = '';
+            renderPanierExamens();
+        });
+    }
+
+    // Checkbox "Cas simple"
+    const chkCasSimple = document.getElementById('chk-cas-simple');
+    if (chkCasSimple) {
+        chkCasSimple.addEventListener('change', () => {
+            const panel1 = document.getElementById('panel-etape-1');
+            const panel2 = document.getElementById('panel-etape-2');
+            const bonLaboSection = panel1 ? panel1.querySelector('#container-panier-examens') : null;
+            const btnBonLabo = document.getElementById('btn-emettre-bon-labo');
+
+            if (chkCasSimple.checked) {
+                // Cas simple : cacher le bon de labo, montrer étape 2
+                if (bonLaboSection) bonLaboSection.parentElement.style.display = 'none';
+                if (btnBonLabo) btnBonLabo.style.display = 'none';
+                if (panel2) panel2.style.display = 'block';
+            } else {
+                // Normal : montrer le bon de labo, cacher étape 2
+                if (bonLaboSection) bonLaboSection.parentElement.style.display = 'block';
+                if (btnBonLabo) btnBonLabo.style.display = 'block';
+                if (panel2) panel2.style.display = 'none';
+            }
+        });
+    }
+
+    // Bouton "Valider Étape 1 : Émettre Bon de Labo"
+    const btnEmettreLaboEl = document.getElementById('btn-emettre-bon-labo');
+    if (btnEmettreLaboEl) {
+        btnEmettreLaboEl.addEventListener('click', async () => {
+            const patientId = document.getElementById('cons-patient-id').value;
+            const rdvId = document.getElementById('cons-rendezvous-id').value;
+            const diagnosticPresomption = document.getElementById('cons-diagnostic-presomption').value.trim();
+            const symptomes = document.getElementById('cons-symptomes').value.trim();
+
+            if (!patientId) {
+                showToast('Veuillez sélectionner un patient.', 'warning');
+                return;
+            }
+            if (!diagnosticPresomption) {
+                showToast('Veuillez saisir le diagnostic de présomption avant de valider.', 'warning');
+                return;
+            }
+            if (panierExamens.length === 0) {
+                showToast('Ajoutez au moins un examen au bon de laboratoire, ou cochez "Cas simple".', 'warning');
+                return;
+            }
+
+            btnEmettreLaboEl.disabled = true;
+            btnEmettreLaboEl.textContent = 'Envoi en cours...';
+
+            try {
+                // 1. Créer la consultation avec diagnostic de présomption
+                const consultationData = {
+                    patient_id: Number(patientId),
+                    medecin_id: Number(user.id),
+                    rendezvous_id: rdvId ? Number(rdvId) : null,
+                    poids: numberOrNull(document.getElementById('cons-poids').value),
+                    taille: numberOrNull(document.getElementById('cons-taille').value),
+                    temperature: numberOrNull(document.getElementById('cons-temp').value),
+                    tension: document.getElementById('cons-tension').value.trim(),
+                    symptomes: symptomes,
+                    diagnostic_presomption: diagnosticPresomption,
+                    notes: '',
+                    examen_ids: panierExamens.map(e => e.id),
+                    prescriptions: []
+                };
+
+                const res = await ApiClient.request('/consultations', 'POST', consultationData);
+
+                showToast('Étape 1 validée ! Bon de laboratoire émis. Le patient peut maintenant payer et passer les examens.', 'success', 6000);
+
+                // Réinitialiser et retourner au dashboard
+                document.getElementById('form-nouvelle-consultation').reset();
+                document.getElementById('cons-patient-id').value = '';
+                document.getElementById('cons-rendezvous-id').value = '';
+                if (document.getElementById('cons-consultation-id')) document.getElementById('cons-consultation-id').value = '';
+                panierExamens = [];
+                renderPanierExamens();
+                medicamentsOrdonnance = [];
+                renderOrdonnance();
+                currentPatient = null;
+                navConsultation.style.display = 'none';
+                navDashboard.click();
+            } catch (error) {
+                showToast('Erreur lors de la validation : ' + error.message, 'danger');
+            } finally {
+                btnEmettreLaboEl.disabled = false;
+                btnEmettreLaboEl.textContent = '🧪 Valider l\'Étape 1 : Émettre Bon de Labo & Envoyer en Caisse';
+            }
+        });
+    }
+
     // ------------------------------------------------------------------
     // Soumission de la consultation
     // ------------------------------------------------------------------
+    
+    // Raccourcis de date de contrôle (+7j, +14j, +1 mois)
+    document.querySelectorAll('.btn-quick-ctrl').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const days = Number(btn.dataset.days);
+            const d = new Date();
+            d.setDate(d.getDate() + days);
+            const dateStr = d.toISOString().split('T')[0];
+            const input = document.getElementById('cons-date-controle');
+            if (input) input.value = dateStr;
+        });
+    });
+    const btnClearCtrl = document.getElementById('btn-clear-ctrl');
+    if (btnClearCtrl) {
+        btnClearCtrl.addEventListener('click', () => {
+            const input = document.getElementById('cons-date-controle');
+            if (input) input.value = '';
+        });
+    }
+
     document.getElementById('form-nouvelle-consultation').addEventListener('submit', async (e) => {
         e.preventDefault();
         const form = e.currentTarget;
-        const rdvId = document.getElementById('cons-rendezvous-id').value;
         const patientId = document.getElementById('cons-patient-id').value;
+        const consId = document.getElementById('cons-consultation-id') ? document.getElementById('cons-consultation-id').value : '';
+
         if (!patientId) {
             showToast('Veuillez sélectionner un patient avant de commencer la consultation.', 'warning');
             return;
         }
 
-        const submitBtn = form.querySelector('button[type="submit"]');
+        const submitBtn = document.getElementById('btn-submit-consultation');
         if (submitBtn) submitBtn.disabled = true;
 
-        const consultationData = {
-            patient_id: Number(patientId),
-            medecin_id: Number(user.id),
-            rendezvous_id: rdvId ? Number(rdvId) : null,
-            poids: numberOrNull(document.getElementById('cons-poids').value),
-            taille: numberOrNull(document.getElementById('cons-taille').value),
-            temperature: numberOrNull(document.getElementById('cons-temp').value),
-            tension: document.getElementById('cons-tension').value.trim(),
-            symptomes: document.getElementById('cons-symptomes').value.trim(),
-            diagnostic: document.getElementById('cons-diagnostic').value.trim(),
-            notes: document.getElementById('cons-notes').value.trim(),
-            prescriptions: medicamentsOrdonnance.map(p => ({
-                medicament: p.medicament,
-                posologie: p.posologie,
-                duree: p.duree,
-                instructions: p.instructions
-            }))
-        };
-
         try {
-            const res = await ApiClient.request('/consultations', 'POST', consultationData);
-            const consultationId = Number(
-                (res && (res.consultation_id ?? (res.data && (res.data.consultation_id ?? res.data.id)))) || 0
-            );
-
-            const selectEx = document.getElementById('cons-examens');
-            const selectedExamens = selectEx
-                ? Array.from(selectEx.selectedOptions).map(opt => Number(opt.value)).filter(n => !isNaN(n))
-                : [];
-
-            let examWarning = '';
-            if (selectedExamens.length > 0) {
-                try {
-                    await ApiClient.request('/prescriptions-examens', 'POST', {
-                        patient_id: Number(patientId),
-                        medecin_id: Number(user.id),
-                        consultation_id: consultationId || null,
-                        examen_ids: selectedExamens
-                    });
-                } catch (examError) {
-                    examWarning = " La consultation est enregistrée, mais les examens n'ont pas pu être prescrits : " + examError.message;
+            if (consId) {
+                // ===== MODE RETOUR LABO : Finaliser Étape 2 (Certitude + Ordonnance) =====
+                const certitude = document.getElementById('cons-diagnostic-certitude').value.trim();
+                if (!certitude) {
+                    showToast('Veuillez saisir le diagnostic de certitude.', 'warning');
+                    if (submitBtn) submitBtn.disabled = false;
+                    return;
                 }
+
+                const certitudeData = {
+                    diagnostic_certitude: certitude,
+                    notes: document.getElementById('cons-notes').value.trim(),
+                    date_controle: document.getElementById('cons-date-controle') ? document.getElementById('cons-date-controle').value : null,
+                    prescriptions: medicamentsOrdonnance.map(p => ({
+                        medicament: p.medicament,
+                        posologie: p.posologie,
+                        duree: p.duree,
+                        instructions: p.instructions || ''
+                    }))
+                };
+
+                await ApiClient.request('/consultations/' + consId + '/certitude', 'POST', certitudeData);
+                showToast('Étape 2 validée ! Diagnostic de certitude et ordonnance enregistrés. Consultation clôturée.', 'success', 6000);
+            } else {
+                // ===== MODE CAS SIMPLE : Consultation complète en une seule étape =====
+                const diagnosticPresomption = document.getElementById('cons-diagnostic-presomption').value.trim();
+                const diagnosticCertitude = document.getElementById('cons-diagnostic-certitude').value.trim();
+                const rdvId = document.getElementById('cons-rendezvous-id').value;
+
+                const consultationData = {
+                    patient_id: Number(patientId),
+                    medecin_id: Number(user.id),
+                    rendezvous_id: rdvId ? Number(rdvId) : null,
+                    poids: numberOrNull(document.getElementById('cons-poids').value),
+                    taille: numberOrNull(document.getElementById('cons-taille').value),
+                    temperature: numberOrNull(document.getElementById('cons-temp').value),
+                    tension: document.getElementById('cons-tension').value.trim(),
+                    symptomes: document.getElementById('cons-symptomes').value.trim(),
+                    diagnostic_presomption: diagnosticPresomption || diagnosticCertitude || '',
+                    diagnostic_certitude: diagnosticCertitude || '',
+                    notes: document.getElementById('cons-notes').value.trim(),
+                    date_controle: document.getElementById('cons-date-controle') ? document.getElementById('cons-date-controle').value : null,
+                    examen_ids: [],
+                    prescriptions: medicamentsOrdonnance.map(p => ({
+                        medicament: p.medicament,
+                        posologie: p.posologie,
+                        duree: p.duree,
+                        instructions: p.instructions || ''
+                    }))
+                };
+
+                await ApiClient.request('/consultations', 'POST', consultationData);
+                showToast('Consultation enregistrée avec succès ! Ordonnance remise au patient.', 'success', 5000);
             }
 
-            showToast('Consultation enregistrée avec succès !' + examWarning, examWarning ? 'warning' : 'success', examWarning ? 8000 : 4000);
+            // Nettoyage après succès
             form.reset();
             document.getElementById('cons-patient-id').value = '';
             document.getElementById('cons-rendezvous-id').value = '';
+            if (document.getElementById('cons-consultation-id')) document.getElementById('cons-consultation-id').value = '';
+            panierExamens = [];
+            renderPanierExamens();
             medicamentsOrdonnance = [];
             renderOrdonnance();
             currentPatient = null;

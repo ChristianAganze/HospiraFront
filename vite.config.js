@@ -15,15 +15,15 @@ export default defineConfig(({ mode }) => {
         build: {
             rollupOptions: {
                 input: {
-                    main: resolve(__dirname, 'index.html'),
-                    login: resolve(__dirname, 'login.html'),
-                    admin: resolve(__dirname, 'admin.html'),
-                    medecin: resolve(__dirname, 'medecin.html'),
-                    secretaire: resolve(__dirname, 'secretaire.html'),
-                    caisse: resolve(__dirname, 'caisse.html'),
-                    laborantin: resolve(__dirname, 'laborantin.html'),
-                    motdepasse: resolve(__dirname, 'motdepasse.html'),
-                    portailPatient: resolve(__dirname, 'portail-patient.html'),
+                    main: resolve(import.meta.dirname, 'index.html'),
+                    login: resolve(import.meta.dirname, 'login.html'),
+                    admin: resolve(import.meta.dirname, 'admin.html'),
+                    medecin: resolve(import.meta.dirname, 'medecin.html'),
+                    secretaire: resolve(import.meta.dirname, 'secretaire.html'),
+                    caisse: resolve(import.meta.dirname, 'caisse.html'),
+                    laborantin: resolve(import.meta.dirname, 'laborantin.html'),
+                    motdepasse: resolve(import.meta.dirname, 'motdepasse.html'),
+                    portailPatient: resolve(import.meta.dirname, 'portail-patient.html'),
                 }
             }
         },
@@ -39,9 +39,9 @@ export default defineConfig(({ mode }) => {
             {
                 name: 'copy-static-js-css',
                 async closeBundle() {
-                    const dist = resolve(__dirname, 'dist');
+                    const dist = resolve(import.meta.dirname, 'dist');
                     for (const dir of ['js', 'css']) {
-                        const src = resolve(__dirname, dir);
+                        const src = resolve(import.meta.dirname, dir);
                         const dest = resolve(dist, dir);
                         if (existsSync(src)) {
                             await cp(src, dest, { recursive: true, force: true });
